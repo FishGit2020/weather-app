@@ -6,6 +6,7 @@ import Forecast from './Forecast';
 import HourlyForecast from './HourlyForecast';
 import WeatherAlerts from './WeatherAlerts';
 import HourlyChart from './HourlyChart';
+import WhatToWear from './WhatToWear';
 import './WeatherDisplay.css';
 
 export default function WeatherDisplay() {
@@ -139,6 +140,8 @@ export default function WeatherDisplay() {
       {current && forecast && <WeatherAlerts current={current} forecast={forecast} />}
 
       {current && <CurrentWeather data={current} />}
+
+      {current && <WhatToWear data={current} />}
 
       {hourly && hourly.length > 0 && (
         <section>
