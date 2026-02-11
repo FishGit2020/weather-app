@@ -7,6 +7,7 @@ import {
   getUserProfile,
   updateUserDarkMode,
   addRecentCity,
+  removeRecentCity,
   getRecentCities,
   UserProfile,
   RecentCity,
@@ -20,6 +21,7 @@ interface AuthContextType {
   signOut: () => Promise<void>;
   updateDarkMode: (darkMode: boolean) => Promise<void>;
   addCity: (city: Omit<RecentCity, 'searchedAt'>) => Promise<void>;
+  removeCity: (cityId: string) => Promise<void>;
   recentCities: RecentCity[];
   refreshProfile: () => Promise<void>;
 }
@@ -96,6 +98,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [user]);
 
+  const removeCity = useCallback(async (cityId: string) => {
+    if (user) {
+      await removeRecentCity(user.uid, cityId);
+      const cities = await getRecentCities(user.uid);
+      setRecentCities(cities);
+    }
+  }, [user]);
+
   return (
     <AuthContext.Provider
       value={{
@@ -106,6 +116,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         signOut: signOutUser,
         updateDarkMode,
         addCity,
+        removeCity,
         recentCities,
         refreshProfile,
       }}

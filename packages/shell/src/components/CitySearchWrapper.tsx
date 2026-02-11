@@ -13,7 +13,7 @@ const CitySearchFallback = () => (
 );
 
 export default function CitySearchWrapper() {
-  const { user, addCity, recentCities } = useAuth();
+  const { user, addCity, removeCity, recentCities } = useAuth();
 
   useEffect(() => {
     if (!user) return;
@@ -42,7 +42,7 @@ export default function CitySearchWrapper() {
   return (
     <ErrorBoundary fallback={<CitySearchFallback />}>
       <Suspense fallback={<Loading />}>
-        <CitySearchMF recentCities={recentCities} />
+        <CitySearchMF recentCities={recentCities} onRemoveCity={user ? removeCity : undefined} />
       </Suspense>
     </ErrorBoundary>
   );

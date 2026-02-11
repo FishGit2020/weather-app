@@ -129,6 +129,21 @@ export async function addRecentCity(uid: string, city: Omit<RecentCity, 'searche
   }
 }
 
+export async function removeRecentCity(uid: string, cityId: string) {
+  const userRef = doc(db, 'users', uid);
+  const userDoc = await getDoc(userRef);
+
+  if (userDoc.exists()) {
+    const profile = userDoc.data() as UserProfile;
+    const updatedCities = (profile.recentCities || []).filter(c => c.id !== cityId);
+
+    await updateDoc(userRef, {
+      recentCities: updatedCities,
+      updatedAt: serverTimestamp(),
+    });
+  }
+}
+
 export async function getRecentCities(uid: string): Promise<RecentCity[]> {
   const profile = await getUserProfile(uid);
   return profile?.recentCities || [];

@@ -33,9 +33,10 @@ const POPULAR_CITIES: RecentCity[] = [
 interface Props {
   onCitySelect?: (city: City) => void;
   recentCities?: RecentCity[];
+  onRemoveCity?: (cityId: string) => void;
 }
 
-export default function CitySearch({ onCitySelect, recentCities = [] }: Props) {
+export default function CitySearch({ onCitySelect, recentCities = [], onRemoveCity }: Props) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<City[]>([]);
   const [inputFocused, setInputFocused] = useState(false);
@@ -166,8 +167,9 @@ export default function CitySearch({ onCitySelect, recentCities = [] }: Props) {
   // Derive dropdown visibility from current state
   const showSearchResults = results.length > 0 && !loading;
   const showDropdown = inputFocused && query.length < 2 && !loading && results.length === 0;
-  const dropdownCities = recentCities.length > 0 ? recentCities.slice(0, 5) : POPULAR_CITIES;
-  const dropdownLabel = recentCities.length > 0 ? 'Recent Searches' : 'Popular Cities';
+  const isShowingRecent = recentCities.length > 0;
+  const dropdownCities = isShowingRecent ? recentCities.slice(0, 5) : POPULAR_CITIES;
+  const dropdownLabel = isShowingRecent ? 'Recent Searches' : 'Popular Cities';
 
   // Get the currently visible list for keyboard navigation
   const visibleItems: (City | RecentCity)[] = showSearchResults
@@ -313,13 +315,13 @@ export default function CitySearch({ onCitySelect, recentCities = [] }: Props) {
               <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">{dropdownLabel}</p>
             </div>
             {dropdownCities.map((city, index) => (
-              <button
+              <div
                 key={city.id}
                 id={`city-option-${index}`}
                 data-dropdown-item
                 onClick={() => handleCityClick(city)}
                 onMouseEnter={() => setHighlightedIndex(index)}
-                className={`w-full text-left px-4 py-3 transition border-b dark:border-gray-700 last:border-b-0 flex items-center ${
+                className={`w-full text-left px-4 py-3 transition border-b dark:border-gray-700 last:border-b-0 flex items-center cursor-pointer ${
                   index === highlightedIndex
                     ? 'bg-blue-50 dark:bg-gray-700'
                     : 'hover:bg-blue-50 dark:hover:bg-gray-700'
@@ -334,7 +336,22 @@ export default function CitySearch({ onCitySelect, recentCities = [] }: Props) {
                   </p>
                 </div>
                 <WeatherPreview lat={city.lat} lon={city.lon} />
-              </button>
+                {isShowingRecent && onRemoveCity && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onRemoveCity(city.id);
+                    }}
+                    className="ml-2 p-1 rounded-full text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 transition flex-shrink-0"
+                    aria-label={`Remove ${city.name} from recent searches`}
+                    title="Remove from recent searches"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                )}
+              </div>
             ))}
           </div>
         )}
