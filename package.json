@@ -29,6 +29,9 @@
     "test:coverage": "vitest run --coverage",
     "test:mf": "pnpm --filter @weather/shell test:run && pnpm --filter @weather/city-search test:run && pnpm --filter @weather/weather-display test:run",
     "test:all": "pnpm test:run && pnpm test:mf",
+    "test:e2e": "playwright test",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:ui": "playwright test --ui",
     "firebase:build": "pnpm build:shared && pnpm firebase:build:mf && pnpm firebase:build:functions && pnpm firebase:assemble",
     "firebase:build:mf": "cross-env NODE_ENV=production pnpm --filter @weather/shell build && cross-env NODE_ENV=production pnpm --filter @weather/city-search build && cross-env NODE_ENV=production pnpm --filter @weather/weather-display build",
     "firebase:build:functions": "cd functions && pnpm install && pnpm build",
@@ -68,6 +71,7 @@
     "ws": "^8.19.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.58.2",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",

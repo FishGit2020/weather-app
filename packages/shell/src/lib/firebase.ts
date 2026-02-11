@@ -1,6 +1,6 @@
-import { initializeApp, getApps } from 'firebase/app';
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, User } from 'firebase/auth';
-import { getFirestore, doc, getDoc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { initializeApp, getApps, FirebaseApp } from 'firebase/app';
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, User, Auth } from 'firebase/auth';
+import { getFirestore, doc, getDoc, setDoc, updateDoc, serverTimestamp, Firestore } from 'firebase/firestore';
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -11,11 +11,20 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
-// Initialize Firebase only once
-const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
-const auth = getAuth(app);
-const db = getFirestore(app);
-const googleProvider = new GoogleAuthProvider();
+// Firebase is optional — the app works without it (auth features disabled)
+const firebaseEnabled = !!firebaseConfig.apiKey;
+
+let app: FirebaseApp | null = null;
+let auth: Auth | null = null;
+let db: Firestore | null = null;
+let googleProvider: GoogleAuthProvider | null = null;
+
+if (firebaseEnabled) {
+  app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+  auth = getAuth(app);
+  db = getFirestore(app);
+  googleProvider = new GoogleAuthProvider();
+}
 
 // User profile type
 export interface UserProfile {
@@ -51,6 +60,7 @@ export interface RecentCity {
 
 // Auth functions
 export async function signInWithGoogle() {
+  if (!auth || !googleProvider) return null;
   try {
     const result = await signInWithPopup(auth, googleProvider);
     await ensureUserProfile(result.user);
@@ -62,6 +72,7 @@ export async function signInWithGoogle() {
 }
 
 export async function logOut() {
+  if (!auth) return;
   try {
     await signOut(auth);
   } catch (error) {
@@ -71,11 +82,17 @@ export async function logOut() {
 }
 
 export function subscribeToAuthChanges(callback: (user: User | null) => void) {
+  if (!auth) {
+    // No Firebase — immediately report no user and return a no-op unsubscribe
+    callback(null);
+    return () => {};
+  }
   return onAuthStateChanged(auth, callback);
 }
 
 // Firestore functions
 async function ensureUserProfile(user: User) {
+  if (!db) return;
   const userRef = doc(db, 'users', user.uid);
   const userDoc = await getDoc(userRef);
 
@@ -96,6 +113,7 @@ async function ensureUserProfile(user: User) {
 }
 
 export async function getUserProfile(uid: string): Promise<UserProfile | null> {
+  if (!db) return null;
   const userRef = doc(db, 'users', uid);
   const userDoc = await getDoc(userRef);
 
@@ -106,6 +124,7 @@ export async function getUserProfile(uid: string): Promise<UserProfile | null> {
 }
 
 export async function updateUserDarkMode(uid: string, darkMode: boolean) {
+  if (!db) return;
   const userRef = doc(db, 'users', uid);
   await updateDoc(userRef, {
     darkMode,
@@ -114,6 +133,7 @@ export async function updateUserDarkMode(uid: string, darkMode: boolean) {
 }
 
 export async function addRecentCity(uid: string, city: Omit<RecentCity, 'searchedAt'>) {
+  if (!db) return;
   const userRef = doc(db, 'users', uid);
   const userDoc = await getDoc(userRef);
 
@@ -141,6 +161,7 @@ export async function addRecentCity(uid: string, city: Omit<RecentCity, 'searche
 }
 
 export async function removeRecentCity(uid: string, cityId: string) {
+  if (!db) return;
   const userRef = doc(db, 'users', uid);
   const userDoc = await getDoc(userRef);
 
@@ -156,6 +177,7 @@ export async function removeRecentCity(uid: string, cityId: string) {
 }
 
 export async function toggleFavoriteCity(uid: string, city: FavoriteCity): Promise<boolean> {
+  if (!db) return false;
   const userRef = doc(db, 'users', uid);
   const userDoc = await getDoc(userRef);
 
@@ -183,4 +205,4 @@ export async function getRecentCities(uid: string): Promise<RecentCity[]> {
   return profile?.recentCities || [];
 }
 
-export { auth, db };
+export { auth, db, firebaseEnabled };
