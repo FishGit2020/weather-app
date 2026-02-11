@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLazyQuery } from '@apollo/client/react';
 import { SEARCH_CITIES, REVERSE_GEOCODE, City, eventBus, MFEvents } from '@weather/shared';
+import WeatherPreview from './WeatherPreview';
 import './CitySearch.css';
 
 interface SearchCitiesResponse {
@@ -270,7 +271,7 @@ export default function CitySearch({ onCitySelect, recentCities = [] }: Props) {
                 data-dropdown-item
                 onClick={() => handleCityClick(city)}
                 onMouseEnter={() => setHighlightedIndex(index)}
-                className={`w-full text-left px-4 py-3 transition border-b dark:border-gray-700 last:border-b-0 ${
+                className={`w-full text-left px-4 py-3 transition border-b dark:border-gray-700 last:border-b-0 flex items-center ${
                   index === highlightedIndex
                     ? 'bg-blue-50 dark:bg-gray-700'
                     : 'hover:bg-blue-50 dark:hover:bg-gray-700'
@@ -278,10 +279,13 @@ export default function CitySearch({ onCitySelect, recentCities = [] }: Props) {
                 role="option"
                 aria-selected={index === highlightedIndex}
               >
-                <p className="font-medium dark:text-white">{city.name}</p>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  {city.state && `${city.state}, `}{city.country}
-                </p>
+                <div className="min-w-0 flex-1">
+                  <p className="font-medium dark:text-white">{city.name}</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    {city.state && `${city.state}, `}{city.country}
+                  </p>
+                </div>
+                <WeatherPreview lat={city.lat} lon={city.lon} />
               </button>
             ))}
           </div>
