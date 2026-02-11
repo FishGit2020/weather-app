@@ -8,6 +8,7 @@ import WeatherAlerts from './WeatherAlerts';
 import HourlyChart from './HourlyChart';
 import WhatToWear from './WhatToWear';
 import SunriseSunset from './SunriseSunset';
+import WeatherMap from './WeatherMap';
 import './WeatherDisplay.css';
 
 export default function WeatherDisplay() {
@@ -162,6 +163,8 @@ export default function WeatherDisplay() {
           <Forecast data={forecast} />
         </section>
       )}
+
+      {location && <WeatherMap lat={location.lat} lon={location.lon} />}
 
       <div className="mt-4 text-center text-sm text-gray-500 dark:text-gray-400">
         <span className="inline-flex items-center px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded">
