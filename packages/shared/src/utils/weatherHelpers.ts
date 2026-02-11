@@ -23,11 +23,45 @@ export function getWeatherDescription(main: string): { color: string; bgColor: s
   return weatherColors[main] || { color: 'text-gray-600', bgColor: 'bg-gray-100' };
 }
 
-export function formatTemperature(temp: number, unit: 'C' | 'F' = 'C'): string {
-  if (unit === 'F') {
+export type TemperatureUnit = 'C' | 'F';
+export type SpeedUnit = 'ms' | 'mph' | 'kmh';
+
+export function getStoredUnits(): { tempUnit: TemperatureUnit; speedUnit: SpeedUnit } {
+  try {
+    const tempUnit = (localStorage.getItem('tempUnit') as TemperatureUnit) || 'C';
+    const speedUnit = (localStorage.getItem('speedUnit') as SpeedUnit) || 'ms';
+    return { tempUnit, speedUnit };
+  } catch {
+    return { tempUnit: 'C', speedUnit: 'ms' };
+  }
+}
+
+export function formatTemperature(temp: number, unit?: TemperatureUnit): string {
+  const u = unit ?? getStoredUnits().tempUnit;
+  if (u === 'F') {
     return `${Math.round(temp * 9/5 + 32)}°F`;
   }
   return `${Math.round(temp)}°C`;
+}
+
+export function convertTemp(temp: number, unit?: TemperatureUnit): number {
+  const u = unit ?? getStoredUnits().tempUnit;
+  if (u === 'F') return Math.round(temp * 9/5 + 32);
+  return Math.round(temp);
+}
+
+export function tempUnitSymbol(unit?: TemperatureUnit): string {
+  const u = unit ?? getStoredUnits().tempUnit;
+  return u === 'F' ? '°F' : '°C';
+}
+
+export function formatWindSpeed(speed: number, unit?: SpeedUnit): string {
+  const u = unit ?? getStoredUnits().speedUnit;
+  switch (u) {
+    case 'mph': return `${Math.round(speed * 2.237)} mph`;
+    case 'kmh': return `${Math.round(speed * 3.6)} km/h`;
+    default: return `${Math.round(speed)} m/s`;
+  }
 }
 
 export function formatDate(timestamp: number): string {

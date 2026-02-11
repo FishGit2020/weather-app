@@ -1,6 +1,7 @@
 import React from 'react';
 import { Outlet, Link } from 'react-router-dom';
 import ThemeToggle from './ThemeToggle';
+import UnitToggle from './UnitToggle';
 import UserMenu from './UserMenu';
 import OfflineIndicator from './OfflineIndicator';
 
@@ -31,6 +32,7 @@ export default function Layout() {
               >
                 Compare
               </Link>
+              <UnitToggle />
               <ThemeToggle />
               <UserMenu />
             </nav>

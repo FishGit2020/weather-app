@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@apollo/client/react';
-import { GET_CURRENT_WEATHER, getWeatherIconUrl } from '@weather/shared';
+import { GET_CURRENT_WEATHER, getWeatherIconUrl, useUnits, formatTemperature } from '@weather/shared';
 import { useAuth } from '../context/AuthContext';
 import { FavoriteCity } from '../lib/firebase';
 
@@ -14,6 +14,7 @@ interface WeatherCardData {
 
 function FavoriteCityCard({ city }: { city: FavoriteCity }) {
   const navigate = useNavigate();
+  const { tempUnit } = useUnits();
   const { data, loading } = useQuery<WeatherCardData>(GET_CURRENT_WEATHER, {
     variables: { lat: city.lat, lon: city.lon },
     fetchPolicy: 'cache-first',
@@ -47,7 +48,7 @@ function FavoriteCityCard({ city }: { city: FavoriteCity }) {
       {data?.currentWeather && (
         <div className="mt-2 flex items-baseline gap-2">
           <span className="text-2xl font-bold text-gray-800 dark:text-white">
-            {Math.round(data.currentWeather.temp)}°
+            {formatTemperature(data.currentWeather.temp, tempUnit)}
           </span>
           <span className="text-xs text-gray-500 dark:text-gray-400 capitalize truncate">
             {data.currentWeather.weather[0]?.description}

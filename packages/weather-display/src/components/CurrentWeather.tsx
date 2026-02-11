@@ -1,20 +1,21 @@
 import React from 'react';
-import { CurrentWeather as CurrentWeatherType, getWeatherIconUrl, getWindDirection, getWeatherDescription } from '@weather/shared';
+import { CurrentWeather as CurrentWeatherType, getWeatherIconUrl, getWindDirection, getWeatherDescription, useUnits, formatTemperature, formatWindSpeed } from '@weather/shared';
 
 interface Props {
   data: CurrentWeatherType;
 }
 
 export default function CurrentWeather({ data }: Props) {
+  const { tempUnit, speedUnit } = useUnits();
   const { color, bgColor } = getWeatherDescription(data.weather[0]?.main || 'Clear');
 
   return (
     <div className={`${bgColor} dark:bg-gray-800 rounded-xl p-6 shadow-lg`}>
       <div className="flex items-center justify-between">
         <div>
-          <p className={`text-6xl font-bold ${color} dark:text-white`}>{Math.round(data.temp)}°C</p>
+          <p className={`text-6xl font-bold ${color} dark:text-white`}>{formatTemperature(data.temp, tempUnit)}</p>
           <p className="text-gray-600 dark:text-gray-300 mt-2">
-            Feels like {Math.round(data.feels_like)}°C
+            Feels like {formatTemperature(data.feels_like, tempUnit)}
           </p>
           <p className={`text-lg capitalize mt-1 ${color} dark:text-gray-200`}>
             {data.weather[0]?.description}
@@ -38,7 +39,7 @@ export default function CurrentWeather({ data }: Props) {
         <div className="text-center">
           <p className="text-sm text-gray-500 dark:text-gray-400">Wind</p>
           <p className="text-xl font-semibold dark:text-white">
-            {Math.round(data.wind.speed)} m/s {getWindDirection(data.wind.deg)}
+            {formatWindSpeed(data.wind.speed, speedUnit)} {getWindDirection(data.wind.deg)}
           </p>
         </div>
         <div className="text-center">

@@ -1,11 +1,12 @@
 import React from 'react';
-import { ForecastDay, getWeatherIconUrl } from '@weather/shared';
+import { ForecastDay, getWeatherIconUrl, useUnits, convertTemp, tempUnitSymbol } from '@weather/shared';
 
 interface Props {
   data: ForecastDay[];
 }
 
 export default function Forecast({ data }: Props) {
+  const { tempUnit } = useUnits();
   const formatDate = (timestamp: number) => {
     return new Date(timestamp * 1000).toLocaleDateString('en-US', {
       weekday: 'short',
@@ -34,8 +35,8 @@ export default function Forecast({ data }: Props) {
           )}
 
           <div className="flex justify-center space-x-2 text-sm">
-            <span className="font-semibold dark:text-white">{Math.round(day.temp.max)}°</span>
-            <span className="text-gray-400 dark:text-gray-500">{Math.round(day.temp.min)}°</span>
+            <span className="font-semibold dark:text-white">{convertTemp(day.temp.max, tempUnit)}°</span>
+            <span className="text-gray-400 dark:text-gray-500">{convertTemp(day.temp.min, tempUnit)}°</span>
           </div>
 
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 capitalize">

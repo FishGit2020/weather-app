@@ -1,11 +1,12 @@
 import React from 'react';
-import { HourlyForecast as HourlyForecastType, getWeatherIconUrl } from '@weather/shared';
+import { HourlyForecast as HourlyForecastType, getWeatherIconUrl, useUnits, formatTemperature } from '@weather/shared';
 
 interface Props {
   data: HourlyForecastType[];
 }
 
 export default function HourlyForecast({ data }: Props) {
+  const { tempUnit } = useUnits();
   const formatTime = (timestamp: number) => {
     return new Date(timestamp * 1000).toLocaleTimeString('en-US', {
       hour: 'numeric',
@@ -33,7 +34,7 @@ export default function HourlyForecast({ data }: Props) {
               />
             )}
 
-            <p className="font-semibold dark:text-white">{Math.round(hour.temp)}°</p>
+            <p className="font-semibold dark:text-white">{formatTemperature(hour.temp, tempUnit)}</p>
 
             {hour.pop > 0 && (
               <p className="text-xs text-blue-500 dark:text-blue-400">
