@@ -4,6 +4,7 @@ import { useWeatherData, subscribeToMFEvent, MFEvents, CitySelectedEvent } from 
 import CurrentWeather from './CurrentWeather';
 import Forecast from './Forecast';
 import HourlyForecast from './HourlyForecast';
+import WeatherAlerts from './WeatherAlerts';
 import './WeatherDisplay.css';
 
 export default function WeatherDisplay() {
@@ -133,6 +134,8 @@ export default function WeatherDisplay() {
           Last updated: {new Date(lastUpdate).toLocaleTimeString()}
         </p>
       )}
+
+      {current && forecast && <WeatherAlerts current={current} forecast={forecast} />}
 
       {current && <CurrentWeather data={current} />}
 
