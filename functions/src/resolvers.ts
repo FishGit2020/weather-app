@@ -28,6 +28,9 @@ interface CurrentWeather {
   clouds: { all: number };
   dt: number;
   timezone: number;
+  sunrise?: number;
+  sunset?: number;
+  visibility?: number;
 }
 
 interface ForecastDay {
@@ -94,7 +97,10 @@ async function getCurrentWeather(apiKey: string, lat: number, lon: number): Prom
     wind: data.wind,
     clouds: data.clouds,
     dt: data.dt,
-    timezone: data.timezone
+    timezone: data.timezone,
+    sunrise: data.sys?.sunrise,
+    sunset: data.sys?.sunset,
+    visibility: data.visibility,
   };
 }
 

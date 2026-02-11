@@ -33,6 +33,9 @@ export const GET_WEATHER = gql`
         }
         dt
         timezone
+        sunrise
+        sunset
+        visibility
       }
       forecast {
         dt
@@ -85,6 +88,9 @@ export const GET_CURRENT_WEATHER = gql`
       }
       dt
       timezone
+      sunrise
+      sunset
+      visibility
     }
   }
 `;
@@ -178,6 +184,9 @@ export const WEATHER_UPDATES = gql`
         }
         dt
         timezone
+        sunrise
+        sunset
+        visibility
       }
     }
   }

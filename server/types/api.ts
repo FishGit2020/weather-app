@@ -22,7 +22,10 @@ export interface OpenWeatherResponse {
   dt: number;
   sys: {
     country: string;
+    sunrise: number;
+    sunset: number;
   };
+  visibility?: number;
   timezone: number;
   name: string;
 }

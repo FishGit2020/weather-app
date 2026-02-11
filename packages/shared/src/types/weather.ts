@@ -10,6 +10,9 @@ export interface CurrentWeather {
   clouds: { all: number };
   dt: number;
   timezone: number;
+  sunrise?: number;
+  sunset?: number;
+  visibility?: number;
 }
 
 export interface WeatherCondition {

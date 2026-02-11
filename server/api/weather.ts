@@ -50,7 +50,10 @@ function transformCurrentWeather(data: OpenWeatherResponse): CurrentWeather {
     wind: data.wind,
     clouds: data.clouds,
     dt: data.dt,
-    timezone: data.timezone
+    timezone: data.timezone,
+    sunrise: data.sys.sunrise,
+    sunset: data.sys.sunset,
+    visibility: data.visibility,
   };
 }
 

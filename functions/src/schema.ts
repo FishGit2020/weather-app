@@ -35,6 +35,9 @@ export const typeDefs = `#graphql
     clouds: Clouds!
     dt: Int!
     timezone: Int!
+    sunrise: Int
+    sunset: Int
+    visibility: Int
   }
 
   type ForecastDay {
