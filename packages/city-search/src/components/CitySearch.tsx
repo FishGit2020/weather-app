@@ -22,6 +22,14 @@ interface RecentCity {
   lon: number;
 }
 
+const POPULAR_CITIES: RecentCity[] = [
+  { id: '40.71,-74.01', name: 'New York', country: 'US', state: 'New York', lat: 40.7128, lon: -74.006 },
+  { id: '51.51,-0.13', name: 'London', country: 'GB', lat: 51.5074, lon: -0.1278 },
+  { id: '35.68,139.69', name: 'Tokyo', country: 'JP', lat: 35.6762, lon: 139.6503 },
+  { id: '48.86,2.35', name: 'Paris', country: 'FR', lat: 48.8566, lon: 2.3522 },
+  { id: '-33.87,151.21', name: 'Sydney', country: 'AU', state: 'New South Wales', lat: -33.8688, lon: 151.2093 },
+];
+
 interface Props {
   onCitySelect?: (city: City) => void;
   recentCities?: RecentCity[];
@@ -158,12 +166,14 @@ export default function CitySearch({ onCitySelect, recentCities = [] }: Props) {
   // Derive dropdown visibility from current state
   const showSearchResults = results.length > 0 && !loading;
   const showDropdown = inputFocused && query.length < 2 && !loading && results.length === 0;
+  const dropdownCities = recentCities.length > 0 ? recentCities.slice(0, 5) : POPULAR_CITIES;
+  const dropdownLabel = recentCities.length > 0 ? 'Recent Searches' : 'Popular Cities';
 
   // Get the currently visible list for keyboard navigation
   const visibleItems: (City | RecentCity)[] = showSearchResults
     ? results
     : showDropdown
-      ? recentCities.slice(0, 5)
+      ? dropdownCities
       : [];
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -299,34 +309,33 @@ export default function CitySearch({ onCitySelect, recentCities = [] }: Props) {
                 {geoError}
               </div>
             )}
-            {recentCities.length > 0 && (
-              <>
-                <div className="px-4 py-2 bg-gray-50 dark:bg-gray-700 border-b dark:border-gray-600">
-                  <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Recent Searches</p>
+            <div className="px-4 py-2 bg-gray-50 dark:bg-gray-700 border-b dark:border-gray-600">
+              <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">{dropdownLabel}</p>
+            </div>
+            {dropdownCities.map((city, index) => (
+              <button
+                key={city.id}
+                id={`city-option-${index}`}
+                data-dropdown-item
+                onClick={() => handleCityClick(city)}
+                onMouseEnter={() => setHighlightedIndex(index)}
+                className={`w-full text-left px-4 py-3 transition border-b dark:border-gray-700 last:border-b-0 flex items-center ${
+                  index === highlightedIndex
+                    ? 'bg-blue-50 dark:bg-gray-700'
+                    : 'hover:bg-blue-50 dark:hover:bg-gray-700'
+                }`}
+                role="option"
+                aria-selected={index === highlightedIndex}
+              >
+                <div className="min-w-0 flex-1">
+                  <p className="font-medium dark:text-white">{city.name}</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    {city.state && `${city.state}, `}{city.country}
+                  </p>
                 </div>
-                {recentCities.slice(0, 5).map((city, index) => (
-                  <button
-                    key={city.id}
-                    id={`city-option-${index}`}
-                    data-dropdown-item
-                    onClick={() => handleCityClick(city)}
-                    onMouseEnter={() => setHighlightedIndex(index)}
-                    className={`w-full text-left px-4 py-3 transition border-b dark:border-gray-700 last:border-b-0 ${
-                      index === highlightedIndex
-                        ? 'bg-blue-50 dark:bg-gray-700'
-                        : 'hover:bg-blue-50 dark:hover:bg-gray-700'
-                    }`}
-                    role="option"
-                    aria-selected={index === highlightedIndex}
-                  >
-                    <p className="font-medium dark:text-white">{city.name}</p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      {city.state && `${city.state}, `}{city.country}
-                    </p>
-                  </button>
-                ))}
-              </>
-            )}
+                <WeatherPreview lat={city.lat} lon={city.lon} />
+              </button>
+            ))}
           </div>
         )}
       </div>
