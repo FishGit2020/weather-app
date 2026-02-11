@@ -1,6 +1,6 @@
 import axios from 'axios';
-import type { OpenWeatherResponse, ForecastResponse } from '@/types/api';
-import type { CurrentWeather, ForecastDay, HourlyForecast } from '@/types/weather';
+import type { OpenWeatherResponse, ForecastResponse } from '../types/api.js';
+import type { CurrentWeather, ForecastDay, HourlyForecast } from '../types/weather.js';
 
 const API_KEY = process.env.OPENWEATHER_API_KEY;
 const BASE_URL = 'https://api.openweathermap.org/data/2.5';

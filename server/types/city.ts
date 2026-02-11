@@ -6,7 +6,3 @@ export interface City {
   lat: number;
   lon: number;
 }
-
-export interface SavedCity extends City {
-  addedAt: number;
-}

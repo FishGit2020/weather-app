@@ -1,6 +1,6 @@
 import axios from 'axios';
-import type { GeocodingResponse } from '@/types/api';
-import type { City } from '@/types/city';
+import type { GeocodingResponse } from '../types/api.js';
+import type { City } from '../types/city.js';
 
 const API_KEY = process.env.OPENWEATHER_API_KEY;
 const GEO_URL = 'https://api.openweathermap.org/geo/1.0';
