@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { useLazyQuery } from '@apollo/client/react';
 import { REVERSE_GEOCODE } from '@weather/shared';
 

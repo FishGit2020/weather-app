@@ -13,7 +13,7 @@ export default defineConfig({
         './CurrentWeather': './src/components/CurrentWeather.tsx',
         './Forecast': './src/components/Forecast.tsx'
       },
-      shared: ['react', 'react-dom', 'react-router-dom', '@apollo/client']
+      shared: ['react', 'react-dom', 'react-router', '@apollo/client']
     })
   ],
   build: {

@@ -1,5 +1,5 @@
 import React, { Suspense, lazy, useState } from 'react';
-import { Routes, Route, useParams, useSearchParams, useNavigate } from 'react-router-dom';
+import { Routes, Route, useParams, useSearchParams, useNavigate } from 'react-router';
 import Layout from './components/Layout';
 import Loading from './components/Loading';
 import ErrorBoundary from './components/ErrorBoundary';

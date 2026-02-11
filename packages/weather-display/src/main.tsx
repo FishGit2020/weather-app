@@ -1,7 +1,7 @@
 // Standalone entry point for development
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from 'react-router';
 import { ApolloProvider } from '@apollo/client/react';
 import { getApolloClient } from '@weather/shared';
 import WeatherDisplay from './components/WeatherDisplay';
