@@ -9,8 +9,10 @@ import {
   addRecentCity,
   removeRecentCity,
   getRecentCities,
+  toggleFavoriteCity,
   UserProfile,
   RecentCity,
+  FavoriteCity,
 } from '../lib/firebase';
 
 interface AuthContextType {
@@ -22,7 +24,9 @@ interface AuthContextType {
   updateDarkMode: (darkMode: boolean) => Promise<void>;
   addCity: (city: Omit<RecentCity, 'searchedAt'>) => Promise<void>;
   removeCity: (cityId: string) => Promise<void>;
+  toggleFavorite: (city: FavoriteCity) => Promise<boolean>;
   recentCities: RecentCity[];
+  favoriteCities: FavoriteCity[];
   refreshProfile: () => Promise<void>;
 }
 
@@ -33,6 +37,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [recentCities, setRecentCities] = useState<RecentCity[]>([]);
+  const [favoriteCities, setFavoriteCities] = useState<FavoriteCity[]>([]);
 
   const refreshProfile = async () => {
     if (user) {
@@ -40,6 +45,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setProfile(userProfile);
       if (userProfile) {
         setRecentCities(userProfile.recentCities || []);
+        setFavoriteCities(userProfile.favoriteCities || []);
       }
     }
   };
@@ -52,10 +58,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setProfile(userProfile);
         if (userProfile) {
           setRecentCities(userProfile.recentCities || []);
+          setFavoriteCities(userProfile.favoriteCities || []);
         }
       } else {
         setProfile(null);
         setRecentCities([]);
+        setFavoriteCities([]);
       }
       setLoading(false);
     });
@@ -77,6 +85,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await logOut();
       setProfile(null);
       setRecentCities([]);
+      setFavoriteCities([]);
     } catch (error) {
       console.error('Sign out failed:', error);
       throw error;
@@ -106,6 +115,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [user]);
 
+  const toggleFavorite = useCallback(async (city: FavoriteCity): Promise<boolean> => {
+    if (user) {
+      const isNowFavorite = await toggleFavoriteCity(user.uid, city);
+      const updatedProfile = await getUserProfile(user.uid);
+      if (updatedProfile) {
+        setFavoriteCities(updatedProfile.favoriteCities || []);
+      }
+      return isNowFavorite;
+    }
+    return false;
+  }, [user]);
+
   return (
     <AuthContext.Provider
       value={{
@@ -117,7 +138,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         updateDarkMode,
         addCity,
         removeCity,
+        toggleFavorite,
         recentCities,
+        favoriteCities,
         refreshProfile,
       }}
     >

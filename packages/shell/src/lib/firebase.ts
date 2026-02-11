@@ -25,8 +25,18 @@ export interface UserProfile {
   photoURL: string | null;
   darkMode: boolean;
   recentCities: RecentCity[];
+  favoriteCities: FavoriteCity[];
   createdAt: Date;
   updatedAt: Date;
+}
+
+export interface FavoriteCity {
+  id: string;
+  name: string;
+  country: string;
+  state?: string;
+  lat: number;
+  lon: number;
 }
 
 export interface RecentCity {
@@ -77,6 +87,7 @@ async function ensureUserProfile(user: User) {
       photoURL: user.photoURL,
       darkMode: false,
       recentCities: [],
+      favoriteCities: [],
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     };
@@ -142,6 +153,29 @@ export async function removeRecentCity(uid: string, cityId: string) {
       updatedAt: serverTimestamp(),
     });
   }
+}
+
+export async function toggleFavoriteCity(uid: string, city: FavoriteCity): Promise<boolean> {
+  const userRef = doc(db, 'users', uid);
+  const userDoc = await getDoc(userRef);
+
+  if (userDoc.exists()) {
+    const profile = userDoc.data() as UserProfile;
+    const favorites = profile.favoriteCities || [];
+    const exists = favorites.some(c => c.id === city.id);
+
+    const updatedFavorites = exists
+      ? favorites.filter(c => c.id !== city.id)
+      : [...favorites, city];
+
+    await updateDoc(userRef, {
+      favoriteCities: updatedFavorites,
+      updatedAt: serverTimestamp(),
+    });
+
+    return !exists; // returns true if added, false if removed
+  }
+  return false;
 }
 
 export async function getRecentCities(uid: string): Promise<RecentCity[]> {
