@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { User } from 'firebase/auth';
 import {
   subscribeToAuthChanges,
@@ -88,13 +88,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const addCity = async (city: Omit<RecentCity, 'searchedAt'>) => {
+  const addCity = useCallback(async (city: Omit<RecentCity, 'searchedAt'>) => {
     if (user) {
       await addRecentCity(user.uid, city);
       const cities = await getRecentCities(user.uid);
       setRecentCities(cities);
     }
-  };
+  }, [user]);
 
   return (
     <AuthContext.Provider

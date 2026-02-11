@@ -25,7 +25,7 @@ interface Props {
 export default function CitySearch({ onCitySelect, recentCities = [] }: Props) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<City[]>([]);
-  const [showRecent, setShowRecent] = useState(false);
+  const [inputFocused, setInputFocused] = useState(false);
   const navigate = useNavigate();
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -41,7 +41,7 @@ export default function CitySearch({ onCitySelect, recentCities = [] }: Props) {
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-        setShowRecent(false);
+        setInputFocused(false);
       }
     }
     document.addEventListener('mousedown', handleClickOutside);
@@ -86,14 +86,11 @@ export default function CitySearch({ onCitySelect, recentCities = [] }: Props) {
     }
     setQuery('');
     setResults([]);
-    setShowRecent(false);
+    setInputFocused(false);
   };
 
-  const handleInputFocus = () => {
-    if (query.length < 2 && recentCities.length > 0) {
-      setShowRecent(true);
-    }
-  };
+  // Derive dropdown visibility from current state — no stale boolean
+  const showRecentCities = inputFocused && query.length < 2 && recentCities.length > 0 && !loading && results.length === 0;
 
   return (
     <div className="city-search-container max-w-xl mx-auto" ref={containerRef}>
@@ -103,7 +100,7 @@ export default function CitySearch({ onCitySelect, recentCities = [] }: Props) {
             type="text"
             value={query}
             onChange={handleInputChange}
-            onFocus={handleInputFocus}
+            onFocus={() => setInputFocused(true)}
             placeholder="Search for a city..."
             className="w-full px-4 py-3 pr-10 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-lg"
           />
@@ -140,7 +137,7 @@ export default function CitySearch({ onCitySelect, recentCities = [] }: Props) {
           </div>
         )}
 
-        {showRecent && recentCities.length > 0 && query.length < 2 && !loading && results.length === 0 && (
+        {showRecentCities && (
           <div className="absolute top-full mt-2 w-full bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden z-10">
             <div className="px-4 py-2 bg-gray-50 dark:bg-gray-700 border-b dark:border-gray-600">
               <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Recent Searches</p>
