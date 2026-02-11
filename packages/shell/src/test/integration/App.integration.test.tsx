@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, waitFor, cleanup } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter } from 'react-router';
 import { MockedProvider } from '@apollo/client/testing/react';
 import { ThemeProvider } from '../../context/ThemeContext';
 import { AuthProvider } from '../../context/AuthContext';

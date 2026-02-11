@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { useQuery } from '@apollo/client/react';
 import { GET_CURRENT_WEATHER, getWeatherIconUrl, useUnits, formatTemperature } from '@weather/shared';
 import { useAuth } from '../context/AuthContext';

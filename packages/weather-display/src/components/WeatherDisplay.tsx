@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, useSearchParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router';
 import { useWeatherData, useRemoteConfig, subscribeToMFEvent, MFEvents, CitySelectedEvent } from '@weather/shared';
 import CurrentWeather from './CurrentWeather';
 import CurrentWeatherV1 from './CurrentWeatherV1';
