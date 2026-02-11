@@ -5,6 +5,7 @@ import CurrentWeather from './CurrentWeather';
 import Forecast from './Forecast';
 import HourlyForecast from './HourlyForecast';
 import WeatherAlerts from './WeatherAlerts';
+import HourlyChart from './HourlyChart';
 import './WeatherDisplay.css';
 
 export default function WeatherDisplay() {
@@ -143,6 +144,9 @@ export default function WeatherDisplay() {
         <section>
           <h3 className="text-xl font-semibold text-gray-800 dark:text-white mb-4">Hourly Forecast</h3>
           <HourlyForecast data={hourly} />
+          <div className="mt-4">
+            <HourlyChart data={hourly} />
+          </div>
         </section>
       )}
 
