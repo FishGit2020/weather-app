@@ -62,6 +62,20 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
         runtimeCaching: [
           {
+            urlPattern: /\/remoteEntry\.js$/,
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'mfe-remote-entries',
+              expiration: {
+                maxEntries: 10,
+                maxAgeSeconds: 60 * 60 // 1 hour
+              },
+              cacheableResponse: {
+                statuses: [0, 200]
+              }
+            }
+          },
+          {
             urlPattern: /^https:\/\/.*\.openweathermap\.org\/.*/i,
             handler: 'NetworkFirst',
             options: {

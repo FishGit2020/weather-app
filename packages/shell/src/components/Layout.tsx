@@ -2,10 +2,12 @@ import React from 'react';
 import { Outlet, Link } from 'react-router-dom';
 import ThemeToggle from './ThemeToggle';
 import UserMenu from './UserMenu';
+import OfflineIndicator from './OfflineIndicator';
 
 export default function Layout() {
   return (
     <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900 transition-colors">
+      <OfflineIndicator />
       <header className="bg-white dark:bg-gray-800 shadow-md sticky top-0 z-50 transition-colors">
         <div className="container mx-auto px-4 py-4 sm:py-6">
           <div className="flex items-center justify-between">
