@@ -12,6 +12,7 @@ vi.mock('../lib/firebase', () => ({
   auth: null,
   db: null,
   perf: null,
+  analytics: null,
   subscribeToAuthChanges: (cb: (user: null) => void) => { cb(null); return () => {}; },
   signInWithGoogle: vi.fn(),
   logOut: vi.fn(),
