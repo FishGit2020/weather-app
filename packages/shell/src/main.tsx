@@ -5,6 +5,7 @@ import { ApolloProvider } from '@apollo/client/react';
 import { getApolloClient } from '@weather/shared';
 import { ThemeProvider } from './context/ThemeContext';
 import { AuthProvider } from './context/AuthContext';
+import { RemoteConfigProvider } from './context/RemoteConfigContext';
 import ThemeSync from './components/ThemeSync';
 import App from './App';
 import './index.css';
@@ -15,12 +16,14 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <ThemeProvider>
       <AuthProvider>
-        <ThemeSync />
-        <ApolloProvider client={client}>
-          <BrowserRouter>
-            <App />
-          </BrowserRouter>
-        </ApolloProvider>
+        <RemoteConfigProvider>
+          <ThemeSync />
+          <ApolloProvider client={client}>
+            <BrowserRouter>
+              <App />
+            </BrowserRouter>
+          </ApolloProvider>
+        </RemoteConfigProvider>
       </AuthProvider>
     </ThemeProvider>
   </React.StrictMode>

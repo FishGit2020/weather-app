@@ -1,6 +1,7 @@
 import { initializeApp, getApps, FirebaseApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, User, Auth } from 'firebase/auth';
 import { getFirestore, doc, getDoc, setDoc, updateDoc, serverTimestamp, Firestore } from 'firebase/firestore';
+import { getPerformance, FirebasePerformance } from 'firebase/performance';
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -17,12 +18,14 @@ const firebaseEnabled = !!firebaseConfig.apiKey;
 let app: FirebaseApp | null = null;
 let auth: Auth | null = null;
 let db: Firestore | null = null;
+let perf: FirebasePerformance | null = null;
 let googleProvider: GoogleAuthProvider | null = null;
 
 if (firebaseEnabled) {
   app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
   auth = getAuth(app);
   db = getFirestore(app);
+  perf = getPerformance(app);
   googleProvider = new GoogleAuthProvider();
 }
 
@@ -205,4 +208,4 @@ export async function getRecentCities(uid: string): Promise<RecentCity[]> {
   return profile?.recentCities || [];
 }
 
-export { auth, db, firebaseEnabled };
+export { app, auth, db, perf, firebaseEnabled };

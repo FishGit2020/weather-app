@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
-import { useWeatherData, subscribeToMFEvent, MFEvents, CitySelectedEvent } from '@weather/shared';
+import { useWeatherData, useRemoteConfig, subscribeToMFEvent, MFEvents, CitySelectedEvent } from '@weather/shared';
 import CurrentWeather from './CurrentWeather';
+import CurrentWeatherV1 from './CurrentWeatherV1';
 import Forecast from './Forecast';
 import HourlyForecast from './HourlyForecast';
 import WeatherAlerts from './WeatherAlerts';
@@ -38,6 +39,9 @@ export default function WeatherDisplay() {
     );
     return unsubscribe;
   }, []);
+
+  const remoteConfig = useRemoteConfig();
+  const useV1Layout = remoteConfig.new_exp === 'variant_a';
 
   const { current, forecast, hourly, loading, error, isLive, lastUpdate } = useWeatherData(
     location?.lat ?? null,
@@ -141,7 +145,7 @@ export default function WeatherDisplay() {
 
       {current && forecast && <WeatherAlerts current={current} forecast={forecast} />}
 
-      {current && <CurrentWeather data={current} />}
+      {current && (useV1Layout ? <CurrentWeatherV1 data={current} /> : <CurrentWeather data={current} />)}
 
       {current && <SunriseSunset data={current} />}
 

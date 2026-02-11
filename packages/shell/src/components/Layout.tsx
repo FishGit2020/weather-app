@@ -3,6 +3,7 @@ import { Outlet, Link, useLocation } from 'react-router-dom';
 import ThemeToggle from './ThemeToggle';
 import UnitToggle from './UnitToggle';
 import UserMenu from './UserMenu';
+import NotificationBell from './NotificationBell';
 import OfflineIndicator from './OfflineIndicator';
 
 export default function Layout() {
@@ -64,6 +65,7 @@ export default function Layout() {
               </Link>
               <UnitToggle />
               <ThemeToggle />
+              <NotificationBell />
               <UserMenu />
             </nav>
 
@@ -71,6 +73,7 @@ export default function Layout() {
             <div className="flex md:hidden items-center space-x-2">
               <UnitToggle />
               <ThemeToggle />
+              <NotificationBell />
               <button
                 ref={toggleRef}
                 onClick={() => setMenuOpen(!menuOpen)}

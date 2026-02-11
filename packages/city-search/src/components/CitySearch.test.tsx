@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
-import { MockedProvider } from '@apollo/client/testing';
+import { MockedProvider } from '@apollo/client/testing/react';
 import CitySearch from './CitySearch';
 import { SEARCH_CITIES } from '@weather/shared';
 
@@ -82,7 +82,7 @@ const renderWithProviders = (ui: React.ReactElement, apolloMocks = mocks) => {
 describe('CitySearch', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.useFakeTimers();
+    vi.useFakeTimers({ shouldAdvanceTime: true });
   });
 
   afterEach(() => {
@@ -110,7 +110,8 @@ describe('CitySearch', () => {
 
     vi.advanceTimersByTime(500);
 
-    expect(screen.queryByText('Searching...')).not.toBeInTheDocument();
+    // No loading skeleton should appear for single character
+    expect(document.querySelector('.animate-pulse')).not.toBeInTheDocument();
   });
 
   it('shows loading state while searching', async () => {
@@ -119,10 +120,11 @@ describe('CitySearch', () => {
     const input = screen.getByPlaceholderText('Search for a city...');
     fireEvent.change(input, { target: { value: 'London' } });
 
-    vi.advanceTimersByTime(300);
+    await vi.advanceTimersByTimeAsync(300);
 
     await waitFor(() => {
-      expect(screen.getByText('Searching...')).toBeInTheDocument();
+      // Component shows skeleton loading cards (animate-pulse divs) during search
+      expect(document.querySelector('.animate-pulse')).toBeInTheDocument();
     });
   });
 
@@ -132,7 +134,7 @@ describe('CitySearch', () => {
     const input = screen.getByPlaceholderText('Search for a city...');
     fireEvent.change(input, { target: { value: 'London' } });
 
-    vi.advanceTimersByTime(300);
+    await vi.advanceTimersByTimeAsync(300);
 
     await waitFor(() => {
       expect(screen.getByText('London')).toBeInTheDocument();
@@ -146,13 +148,13 @@ describe('CitySearch', () => {
     const input = screen.getByPlaceholderText('Search for a city...');
     fireEvent.change(input, { target: { value: 'London' } });
 
-    vi.advanceTimersByTime(300);
+    await vi.advanceTimersByTimeAsync(300);
 
     await waitFor(() => {
       expect(screen.getByText('London')).toBeInTheDocument();
     });
 
-    const cityButton = screen.getByRole('button', { name: /London/i });
+    const cityButton = screen.getAllByRole('option', { name: /London/i })[0];
     fireEvent.click(cityButton);
 
     expect(mockNavigate).toHaveBeenCalledWith(
@@ -167,13 +169,13 @@ describe('CitySearch', () => {
     const input = screen.getByPlaceholderText('Search for a city...');
     fireEvent.change(input, { target: { value: 'London' } });
 
-    vi.advanceTimersByTime(300);
+    await vi.advanceTimersByTimeAsync(300);
 
     await waitFor(() => {
       expect(screen.getByText('London')).toBeInTheDocument();
     });
 
-    const cityButton = screen.getByRole('button', { name: /London/i });
+    const cityButton = screen.getAllByRole('option', { name: /London/i })[0];
     fireEvent.click(cityButton);
 
     expect(onCitySelect).toHaveBeenCalledWith(mockCities[0]);
@@ -185,13 +187,13 @@ describe('CitySearch', () => {
     const input = screen.getByPlaceholderText('Search for a city...') as HTMLInputElement;
     fireEvent.change(input, { target: { value: 'London' } });
 
-    vi.advanceTimersByTime(300);
+    await vi.advanceTimersByTimeAsync(300);
 
     await waitFor(() => {
       expect(screen.getByText('London')).toBeInTheDocument();
     });
 
-    const cityButton = screen.getByRole('button', { name: /London/i });
+    const cityButton = screen.getAllByRole('option', { name: /London/i })[0];
     fireEvent.click(cityButton);
 
     expect(input.value).toBe('');
@@ -210,15 +212,14 @@ describe('CitySearch', () => {
     fireEvent.change(input, { target: { value: 'Lon' } });
     vi.advanceTimersByTime(100);
 
-    // Should not have searched yet
-    expect(screen.queryByText('Searching...')).not.toBeInTheDocument();
+    // Should not have loading skeleton yet (debounce hasn't fired)
+    expect(document.querySelector('.city-search-dropdown .animate-pulse')).not.toBeInTheDocument();
 
     // After debounce timer
     vi.advanceTimersByTime(300);
 
     // Now should search
     await waitFor(() => {
-      // Component should attempt to search
       expect(input).toHaveValue('Lon');
     });
   });

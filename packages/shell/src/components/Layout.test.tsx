@@ -1,13 +1,37 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import Layout from './Layout';
+import { ThemeProvider } from '../context/ThemeContext';
+import { AuthProvider } from '../context/AuthContext';
+
+// Mock the firebase lib so AuthProvider doesn't need real Firebase
+vi.mock('../lib/firebase', () => ({
+  firebaseEnabled: false,
+  app: null,
+  auth: null,
+  db: null,
+  perf: null,
+  subscribeToAuthChanges: (cb: (user: null) => void) => { cb(null); return () => {}; },
+  signInWithGoogle: vi.fn(),
+  logOut: vi.fn(),
+  getUserProfile: vi.fn().mockResolvedValue(null),
+  updateUserDarkMode: vi.fn(),
+  addRecentCity: vi.fn(),
+  removeRecentCity: vi.fn(),
+  getRecentCities: vi.fn().mockResolvedValue([]),
+  toggleFavoriteCity: vi.fn().mockResolvedValue(false),
+}));
 
 const renderWithRouter = (ui: React.ReactElement) => {
   return render(
-    <MemoryRouter>
-      {ui}
-    </MemoryRouter>
+    <ThemeProvider>
+      <AuthProvider>
+        <MemoryRouter>
+          {ui}
+        </MemoryRouter>
+      </AuthProvider>
+    </ThemeProvider>
   );
 };
 

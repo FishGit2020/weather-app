@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { MockedProvider } from '@apollo/client/testing';
+import { MockedProvider } from '@apollo/client/testing/react';
 import CitySearch from '../../components/CitySearch';
 import { SEARCH_CITIES, eventBus, MFEvents } from '@weather/shared';
 
@@ -96,7 +96,7 @@ const renderWithProviders = (apolloMocks: any[] = successMocks) => {
 describe('CitySearch Integration', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.useFakeTimers();
+    vi.useFakeTimers({ shouldAdvanceTime: true });
   });
 
   afterEach(() => {
@@ -112,7 +112,7 @@ describe('CitySearch Integration', () => {
       fireEvent.change(input, { target: { value: 'London' } });
 
       // Wait for debounce
-      vi.advanceTimersByTime(300);
+      await vi.advanceTimersByTimeAsync(300);
 
       // Wait for results
       await waitFor(() => {
@@ -120,7 +120,7 @@ describe('CitySearch Integration', () => {
       });
 
       // Click on result
-      fireEvent.click(screen.getByRole('button', { name: /London/i }));
+      fireEvent.click(screen.getByRole('option', { name: /London/i }));
 
       // Should navigate
       expect(mockNavigate).toHaveBeenCalledWith(
@@ -135,7 +135,7 @@ describe('CitySearch Integration', () => {
 
       // First search
       fireEvent.change(input, { target: { value: 'London' } });
-      vi.advanceTimersByTime(300);
+      await vi.advanceTimersByTimeAsync(300);
 
       await waitFor(() => {
         expect(screen.getByText('London')).toBeInTheDocument();
@@ -144,7 +144,7 @@ describe('CitySearch Integration', () => {
       // Clear and search again
       fireEvent.change(input, { target: { value: '' } });
       fireEvent.change(input, { target: { value: 'New York' } });
-      vi.advanceTimersByTime(300);
+      await vi.advanceTimersByTimeAsync(300);
 
       await waitFor(() => {
         expect(screen.getByText('New York')).toBeInTheDocument();
@@ -155,23 +155,23 @@ describe('CitySearch Integration', () => {
   describe('Event Bus Integration', () => {
     it('publishes CITY_SELECTED event when city is clicked', async () => {
       const eventSpy = vi.fn();
-      eventBus.subscribe(MFEvents.CITY_SELECTED, eventSpy);
+      const unsubscribe = eventBus.subscribe(MFEvents.CITY_SELECTED, eventSpy);
 
       renderWithProviders();
 
       const input = screen.getByPlaceholderText('Search for a city...');
       fireEvent.change(input, { target: { value: 'London' } });
-      vi.advanceTimersByTime(300);
+      await vi.advanceTimersByTimeAsync(300);
 
       await waitFor(() => {
         expect(screen.getByText('London')).toBeInTheDocument();
       });
 
-      fireEvent.click(screen.getByRole('button', { name: /London/i }));
+      fireEvent.click(screen.getByRole('option', { name: /London/i }));
 
       expect(eventSpy).toHaveBeenCalledWith({ city: mockCities[0] });
 
-      eventBus.unsubscribe(MFEvents.CITY_SELECTED, eventSpy);
+      unsubscribe();
     });
   });
 
@@ -181,7 +181,7 @@ describe('CitySearch Integration', () => {
 
       const input = screen.getByPlaceholderText('Search for a city...');
       fireEvent.change(input, { target: { value: 'Unknown' } });
-      vi.advanceTimersByTime(300);
+      await vi.advanceTimersByTimeAsync(300);
 
       await waitFor(() => {
         expect(screen.queryByRole('button')).not.toBeInTheDocument();
@@ -202,13 +202,13 @@ describe('CitySearch Integration', () => {
 
       const input = screen.getByPlaceholderText('Search for a city...') as HTMLInputElement;
       fireEvent.change(input, { target: { value: 'London' } });
-      vi.advanceTimersByTime(300);
+      await vi.advanceTimersByTimeAsync(300);
 
       await waitFor(() => {
         expect(screen.getByText('London')).toBeInTheDocument();
       });
 
-      fireEvent.click(screen.getByRole('button', { name: /London/i }));
+      fireEvent.click(screen.getByRole('option', { name: /London/i }));
 
       expect(input.value).toBe('');
     });
@@ -218,13 +218,13 @@ describe('CitySearch Integration', () => {
 
       const input = screen.getByPlaceholderText('Search for a city...');
       fireEvent.change(input, { target: { value: 'London' } });
-      vi.advanceTimersByTime(300);
+      await vi.advanceTimersByTimeAsync(300);
 
       await waitFor(() => {
         expect(screen.getByText('London')).toBeInTheDocument();
       });
 
-      fireEvent.click(screen.getByRole('button', { name: /London/i }));
+      fireEvent.click(screen.getByRole('option', { name: /London/i }));
 
       await waitFor(() => {
         expect(screen.queryByText('England, GB')).not.toBeInTheDocument();

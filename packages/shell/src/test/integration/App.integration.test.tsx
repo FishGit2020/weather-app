@@ -1,7 +1,9 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, cleanup } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { MockedProvider } from '@apollo/client/testing';
+import { MockedProvider } from '@apollo/client/testing/react';
+import { ThemeProvider } from '../../context/ThemeContext';
+import { AuthProvider } from '../../context/AuthContext';
 import App from '../../App';
 
 // Mock the remote modules
@@ -13,13 +15,35 @@ vi.mock('weatherDisplay/WeatherDisplay', () => ({
   default: () => <div data-testid="weather-display-mfe">Weather Display Module</div>,
 }));
 
+// Mock the firebase lib so AuthProvider doesn't need real Firebase
+vi.mock('../../lib/firebase', () => ({
+  firebaseEnabled: false,
+  app: null,
+  auth: null,
+  db: null,
+  perf: null,
+  subscribeToAuthChanges: (cb: (user: null) => void) => { cb(null); return () => {}; },
+  signInWithGoogle: vi.fn(),
+  logOut: vi.fn(),
+  getUserProfile: vi.fn().mockResolvedValue(null),
+  updateUserDarkMode: vi.fn(),
+  addRecentCity: vi.fn(),
+  removeRecentCity: vi.fn(),
+  getRecentCities: vi.fn().mockResolvedValue([]),
+  toggleFavoriteCity: vi.fn().mockResolvedValue(false),
+}));
+
 const renderApp = (initialRoute = '/') => {
   return render(
-    <MemoryRouter initialEntries={[initialRoute]}>
-      <MockedProvider mocks={[]} addTypename={false}>
-        <App />
-      </MockedProvider>
-    </MemoryRouter>
+    <ThemeProvider>
+      <AuthProvider>
+        <MemoryRouter initialEntries={[initialRoute]}>
+          <MockedProvider mocks={[]} addTypename={false}>
+            <App />
+          </MockedProvider>
+        </MemoryRouter>
+      </AuthProvider>
+    </ThemeProvider>
   );
 };
 
@@ -86,6 +110,8 @@ describe('App Integration', () => {
     it('renders header on all pages', () => {
       renderApp('/');
       expect(screen.getByText('Weather Tracker')).toBeInTheDocument();
+
+      cleanup();
 
       renderApp('/weather/51.5074,-0.1278');
       expect(screen.getByText('Weather Tracker')).toBeInTheDocument();

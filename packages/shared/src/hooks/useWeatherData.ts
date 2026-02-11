@@ -3,7 +3,10 @@ import { GET_WEATHER, WEATHER_UPDATES } from '../apollo/queries';
 import type { CurrentWeather, ForecastDay, HourlyForecast } from '../types';
 
 // Check if we're in production (Firebase doesn't support WebSocket subscriptions)
-const isProduction = typeof window !== 'undefined' && !window.location.hostname.includes('localhost');
+const isProduction = typeof window !== 'undefined' &&
+  !window.location.hostname.includes('localhost') &&
+  window.location.hostname !== '127.0.0.1' &&
+  window.location.hostname !== '[::1]';
 
 interface WeatherResponse {
   weather: {

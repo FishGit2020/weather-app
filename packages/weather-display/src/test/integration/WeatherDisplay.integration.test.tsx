@@ -1,9 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import { MockedProvider } from '@apollo/client/testing';
+import { MockedProvider } from '@apollo/client/testing/react';
 import WeatherDisplay from '../../components/WeatherDisplay';
-import { GET_WEATHER } from '@weather/shared';
+import { GET_WEATHER, WEATHER_UPDATES } from '@weather/shared';
 
 const mockWeatherResponse = {
   weather: {
@@ -70,6 +70,18 @@ const mockWeatherResponse = {
   }
 };
 
+// Subscription mock that never resolves (simulates waiting for push)
+const subscriptionMock = {
+  request: {
+    query: WEATHER_UPDATES,
+    variables: { lat: 51.5074, lon: -0.1278 },
+  },
+  result: {
+    data: null,
+  },
+  delay: Infinity,
+};
+
 const successMocks = [
   {
     request: {
@@ -80,6 +92,7 @@ const successMocks = [
       data: mockWeatherResponse,
     },
   },
+  subscriptionMock,
 ];
 
 const errorMocks = [
@@ -90,6 +103,7 @@ const errorMocks = [
     },
     error: new Error('Failed to fetch weather data'),
   },
+  subscriptionMock,
 ];
 
 const renderWithProviders = (
@@ -116,7 +130,8 @@ describe('WeatherDisplay Integration', () => {
     it('shows loading indicator initially', () => {
       renderWithProviders();
 
-      expect(screen.getByText(/loading/i)).toBeInTheDocument();
+      // Component shows skeleton UI with animate-pulse divs during loading
+      expect(document.querySelector('.animate-pulse')).toBeInTheDocument();
     });
   });
 
@@ -133,7 +148,9 @@ describe('WeatherDisplay Integration', () => {
       renderWithProviders();
 
       await waitFor(() => {
-        expect(screen.getByText('22°C')).toBeInTheDocument();
+        // Temperature may appear in both current weather and hourly forecast
+        const temps = screen.getAllByText('22°C');
+        expect(temps.length).toBeGreaterThan(0);
       });
     });
 
@@ -141,7 +158,9 @@ describe('WeatherDisplay Integration', () => {
       renderWithProviders();
 
       await waitFor(() => {
-        expect(screen.getByText('clear sky')).toBeInTheDocument();
+        // "clear sky" may appear in multiple sections (current + forecast + hourly)
+        const descriptions = screen.getAllByText('clear sky');
+        expect(descriptions.length).toBeGreaterThan(0);
       });
     });
 
@@ -176,19 +195,20 @@ describe('WeatherDisplay Integration', () => {
       renderWithProviders('/weather/51.5074,-0.1278?name=London', errorMocks);
 
       await waitFor(() => {
-        expect(screen.getByText(/error/i)).toBeInTheDocument();
+        // Error message may be from query or subscription failure
+        const errorEl = document.querySelector('.text-red-600, .text-red-400');
+        expect(errorEl).toBeInTheDocument();
       });
     });
   });
 
   describe('URL Handling', () => {
     it('parses coordinates from URL', async () => {
-      renderWithProviders('/weather/40.7128,-74.006?name=New%20York');
+      // Use coordinates that have mocks
+      renderWithProviders('/weather/51.5074,-0.1278?name=New%20York');
 
-      // The component should make a request with these coordinates
-      // Since we don't have a mock for these coords, it might show loading or error
       await waitFor(() => {
-        expect(screen.getByText(/New York|loading|error/i)).toBeInTheDocument();
+        expect(screen.getByText(/New York/i)).toBeInTheDocument();
       });
     });
 
@@ -197,7 +217,7 @@ describe('WeatherDisplay Integration', () => {
 
       await waitFor(() => {
         // Should show "Test City" from the URL param
-        expect(screen.getByText(/Test City|London/i)).toBeInTheDocument();
+        expect(screen.getByText(/Test City/i)).toBeInTheDocument();
       });
     });
   });

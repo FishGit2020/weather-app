@@ -1,5 +1,5 @@
-import { ApolloClient, InMemoryCache, HttpLink, split } from '@apollo/client';
-import { setContext } from '@apollo/client/link/context';
+import { ApolloClient, InMemoryCache, HttpLink, ApolloLink } from '@apollo/client';
+import { SetContextLink } from '@apollo/client/link/context';
 import { GraphQLWsLink } from '@apollo/client/link/subscriptions';
 import { getMainDefinition } from '@apollo/client/utilities';
 import { createClient } from 'graphql-ws';
@@ -7,7 +7,10 @@ import { getRecaptchaToken } from '../utils/recaptcha';
 
 // Check if we're on the client side
 const isBrowser = typeof window !== 'undefined';
-const isProduction = isBrowser && !window.location.hostname.includes('localhost');
+const isProduction = isBrowser &&
+  !window.location.hostname.includes('localhost') &&
+  window.location.hostname !== '127.0.0.1' &&
+  window.location.hostname !== '[::1]';
 
 // Create Apollo Client factory function for micro frontends
 export function createApolloClient(graphqlUrl?: string, wsUrl?: string) {
@@ -30,7 +33,8 @@ export function createApolloClient(graphqlUrl?: string, wsUrl?: string) {
   });
 
   // reCAPTCHA v3 link: attaches a fresh token to every HTTP request
-  const recaptchaLink = setContext(async (operation, { headers }) => {
+  // SetContextLink(prevContext, operation) — note: argument order is swapped vs old setContext
+  const recaptchaLink = new SetContextLink(async (prevContext, operation) => {
     // Convert PascalCase operation name to snake_case for reCAPTCHA action
     const action = (operation.operationName || 'graphql')
       .replace(/([a-z])([A-Z])/g, '$1_$2')
@@ -38,7 +42,7 @@ export function createApolloClient(graphqlUrl?: string, wsUrl?: string) {
     const token = await getRecaptchaToken(action);
     return {
       headers: {
-        ...headers,
+        ...prevContext.headers,
         ...(token ? { 'x-recaptcha-token': token } : {})
       }
     };
@@ -64,7 +68,7 @@ export function createApolloClient(graphqlUrl?: string, wsUrl?: string) {
   }
 
   const splitLink = isBrowser && wsLink
-    ? split(
+    ? ApolloLink.split(
         ({ query }) => {
           const definition = getMainDefinition(query);
           return (
