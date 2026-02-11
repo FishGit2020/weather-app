@@ -269,8 +269,19 @@ export default function CitySearch({ onCitySelect, recentCities = [], onRemoveCi
         </div>
 
         {loading && (
-          <div className="absolute top-full mt-2 w-full bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 text-center z-10">
-            <p className="text-gray-500 dark:text-gray-400">Searching...</p>
+          <div className="absolute top-full mt-2 w-full bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden z-10">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="flex items-center px-4 py-3 border-b dark:border-gray-700 last:border-b-0 animate-pulse">
+                <div className="flex-1 min-w-0">
+                  <div className="h-4 bg-gray-200 dark:bg-gray-600 rounded w-32 mb-2" />
+                  <div className="h-3 bg-gray-200 dark:bg-gray-600 rounded w-20" />
+                </div>
+                <div className="flex items-center gap-1 ml-auto pl-2">
+                  <div className="w-6 h-6 rounded-full bg-gray-200 dark:bg-gray-600" />
+                  <div className="w-8 h-4 rounded bg-gray-200 dark:bg-gray-600" />
+                </div>
+              </div>
+            ))}
           </div>
         )}
 
