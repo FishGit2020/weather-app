@@ -71,7 +71,7 @@ export default function WeatherDisplay() {
 
   if (loading && !current) {
     return (
-      <div className="weather-display-container space-y-6 animate-pulse">
+      <div className="weather-display-container space-y-6 animate-pulse" aria-busy="true" aria-label="Loading weather data">
         {/* City name + badge skeleton */}
         <div className="flex items-center justify-between">
           <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-48" />
@@ -131,14 +131,14 @@ export default function WeatherDisplay() {
 
   if (error) {
     return (
-      <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6 text-center">
+      <div role="alert" className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6 text-center">
         <p className="text-red-600 dark:text-red-400">{error}</p>
       </div>
     );
   }
 
   return (
-    <div className="weather-display-container space-y-6 animate-fadeIn">
+    <div className="weather-display-container space-y-6 animate-fadeIn" aria-live="polite">
       <Link
         to="/"
         className="inline-flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors"

@@ -256,6 +256,7 @@ export default function CitySearch({ onCitySelect, recentCities = [], onRemoveCi
             placeholder="Search for a city..."
             className="w-full px-4 py-3 pr-10 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-lg"
             role="combobox"
+            aria-label="Search for a city"
             aria-expanded={visibleItems.length > 0 || showDropdown}
             aria-activedescendant={highlightedIndex >= 0 ? `city-option-${highlightedIndex}` : undefined}
           />
