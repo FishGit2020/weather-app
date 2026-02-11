@@ -2,7 +2,7 @@ import { initializeApp, getApps, FirebaseApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, User, Auth } from 'firebase/auth';
 import { getFirestore, doc, getDoc, setDoc, updateDoc, serverTimestamp, Firestore } from 'firebase/firestore';
 import { getPerformance, FirebasePerformance } from 'firebase/performance';
-import { getAnalytics, Analytics } from 'firebase/analytics';
+import { getAnalytics, setUserId, setUserProperties, logEvent as firebaseLogEvent, Analytics } from 'firebase/analytics';
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -210,6 +210,29 @@ export async function toggleFavoriteCity(uid: string, city: FavoriteCity): Promi
 export async function getRecentCities(uid: string): Promise<RecentCity[]> {
   const profile = await getUserProfile(uid);
   return profile?.recentCities || [];
+}
+
+// Analytics functions
+
+/** Link analytics sessions to an authenticated user for accurate retention tracking */
+export function identifyUser(uid: string, properties?: Record<string, string>) {
+  if (!analytics) return;
+  setUserId(analytics, uid);
+  if (properties) {
+    setUserProperties(analytics, properties);
+  }
+}
+
+/** Clear user identity on sign-out */
+export function clearUserIdentity() {
+  if (!analytics) return;
+  setUserId(analytics, null as any);
+}
+
+/** Log a custom analytics event */
+export function logEvent(eventName: string, params?: Record<string, any>) {
+  if (!analytics) return;
+  firebaseLogEvent(analytics, eventName, params);
 }
 
 export { app, auth, db, perf, analytics, firebaseEnabled };

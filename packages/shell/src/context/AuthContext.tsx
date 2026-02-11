@@ -10,6 +10,9 @@ import {
   removeRecentCity,
   getRecentCities,
   toggleFavoriteCity,
+  identifyUser,
+  clearUserIdentity,
+  logEvent,
   UserProfile,
   RecentCity,
   FavoriteCity,
@@ -54,6 +57,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const unsubscribe = subscribeToAuthChanges(async (firebaseUser) => {
       setUser(firebaseUser);
       if (firebaseUser) {
+        // Link analytics sessions to this authenticated user
+        identifyUser(firebaseUser.uid, {
+          sign_in_method: 'google',
+        });
+        logEvent('login', { method: 'google' });
+
         const userProfile = await getUserProfile(firebaseUser.uid);
         setProfile(userProfile);
         if (userProfile) {
@@ -61,6 +70,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setFavoriteCities(userProfile.favoriteCities || []);
         }
       } else {
+        clearUserIdentity();
         setProfile(null);
         setRecentCities([]);
         setFavoriteCities([]);
@@ -105,6 +115,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const cities = await getRecentCities(user.uid);
       setRecentCities(cities);
     }
+    logEvent('city_searched', { city_name: city.name, city_country: city.country });
   }, [user]);
 
   const removeCity = useCallback(async (cityId: string) => {
