@@ -25,6 +25,9 @@ dist-ssr
 *.sln
 *.sw?
 
+# VitePWA dev artifacts
+**/dev-dist/
+
 # Playwright
 /test-results/
 /playwright-report/

@@ -4,8 +4,8 @@ test.describe('Theme toggle', () => {
   test('toggles dark mode on the page', async ({ page }) => {
     await page.goto('/');
 
-    // The theme toggle button has aria-label "Switch to dark mode" or "Switch to light mode"
-    const themeButton = page.getByRole('button', { name: /switch to (dark|light) mode/i });
+    // Both desktop and mobile navs render the theme toggle; pick the first visible one
+    const themeButton = page.getByRole('button', { name: /switch to (dark|light) mode/i }).first();
 
     const html = page.locator('html');
     const wasDark = await html.evaluate(el => el.classList.contains('dark'));
@@ -22,8 +22,8 @@ test.describe('Unit toggle', () => {
   test('switches between Celsius and Fahrenheit', async ({ page }) => {
     await page.goto('/');
 
-    // Unit toggle button shows "°C" or "°F"
-    const unitButton = page.getByRole('button', { name: /°[CF]/ });
+    // Both desktop and mobile navs render the unit toggle; pick the first visible one
+    const unitButton = page.getByRole('button', { name: /°[CF]/ }).first();
     await expect(unitButton).toBeVisible();
 
     const initialText = await unitButton.textContent();
