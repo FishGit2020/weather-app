@@ -43,11 +43,23 @@ export default function WeatherDisplay() {
   const remoteConfig = useRemoteConfig();
   const useV1Layout = remoteConfig.new_exp === 'variant_a';
 
-  const { current, forecast, hourly, loading, error, isLive, lastUpdate } = useWeatherData(
+  const [refreshing, setRefreshing] = useState(false);
+
+  const { current, forecast, hourly, loading, error, isLive, lastUpdate, refetch } = useWeatherData(
     location?.lat ?? null,
     location?.lon ?? null,
     true // Enable real-time updates
   );
+
+  const handleRefresh = async () => {
+    if (refreshing || !refetch) return;
+    setRefreshing(true);
+    try {
+      await refetch();
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   if (!location) {
     return (
@@ -139,12 +151,26 @@ export default function WeatherDisplay() {
 
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-gray-800 dark:text-white">{cityName}</h2>
-        {isLive && (
-          <span className="inline-flex items-center px-2 py-1 bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 text-sm rounded">
-            <span className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></span>
-            Live
-          </span>
-        )}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleRefresh}
+            disabled={refreshing}
+            className="inline-flex items-center gap-1 px-2 py-1 text-sm text-gray-500 dark:text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-gray-700 rounded transition-colors disabled:opacity-50"
+            aria-label="Refresh weather data"
+            title="Refresh weather data"
+          >
+            <svg className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            {refreshing ? 'Refreshing...' : 'Refresh'}
+          </button>
+          {isLive && (
+            <span className="inline-flex items-center px-2 py-1 bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 text-sm rounded">
+              <span className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></span>
+              Live
+            </span>
+          )}
+        </div>
       </div>
 
       {lastUpdate && (
