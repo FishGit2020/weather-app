@@ -6,6 +6,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 import UseMyLocation from './components/UseMyLocation';
 import CitySearchWrapper from './components/CitySearchWrapper';
 import FavoriteCities from './components/FavoriteCities';
+import WeatherCompare from './components/WeatherCompare';
 import { useAuth } from './context/AuthContext';
 
 // Lazy load remote micro frontends
@@ -115,6 +116,7 @@ export default function App() {
       <Route path="/" element={<Layout />}>
         <Route index element={<HomePage />} />
         <Route path="weather/:coords" element={<WeatherPage />} />
+        <Route path="compare" element={<WeatherCompare />} />
         <Route path="*" element={<NotFound />} />
       </Route>
     </Routes>

@@ -23,6 +23,12 @@ export default function Layout() {
               >
                 Home
               </Link>
+              <Link
+                to="/compare"
+                className="text-sm sm:text-base text-gray-600 dark:text-gray-300 hover:text-blue-500 dark:hover:text-blue-400 transition"
+              >
+                Compare
+              </Link>
               <ThemeToggle />
               <UserMenu />
             </nav>
