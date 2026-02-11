@@ -269,7 +269,7 @@ export default function CitySearch({ onCitySelect, recentCities = [], onRemoveCi
         </div>
 
         {loading && (
-          <div className="absolute top-full mt-2 w-full bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden z-10">
+          <div className="city-search-dropdown absolute top-full mt-2 w-full bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden z-10">
             {[...Array(3)].map((_, i) => (
               <div key={i} className="flex items-center px-4 py-3 border-b dark:border-gray-700 last:border-b-0 animate-pulse">
                 <div className="flex-1 min-w-0">
@@ -286,7 +286,7 @@ export default function CitySearch({ onCitySelect, recentCities = [], onRemoveCi
         )}
 
         {showSearchResults && (
-          <div ref={dropdownRef} className="absolute top-full mt-2 w-full bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden z-10" role="listbox">
+          <div ref={dropdownRef} className="city-search-dropdown absolute top-full mt-2 w-full bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden z-10" role="listbox">
             {results.map((city, index) => (
               <button
                 key={city.id}
@@ -315,7 +315,7 @@ export default function CitySearch({ onCitySelect, recentCities = [], onRemoveCi
         )}
 
         {showDropdown && (
-          <div ref={dropdownRef} className="absolute top-full mt-2 w-full bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden z-10" role="listbox">
+          <div ref={dropdownRef} className="city-search-dropdown absolute top-full mt-2 w-full bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden z-10" role="listbox">
             <LocationButton />
             {geoError && (
               <div className="px-4 py-2 text-xs text-red-500 dark:text-red-400 border-b dark:border-gray-700">
