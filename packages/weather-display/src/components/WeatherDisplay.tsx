@@ -126,7 +126,7 @@ export default function WeatherDisplay() {
   }
 
   return (
-    <div className="weather-display-container space-y-6">
+    <div className="weather-display-container space-y-6 animate-fadeIn">
       <Link
         to="/"
         className="inline-flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors"
