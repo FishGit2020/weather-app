@@ -11,6 +11,7 @@ import { WebSocketServer } from 'ws';
 import { useServer } from 'graphql-ws/use/ws';
 import { typeDefs } from './graphql/schema.js';
 import { resolvers, cleanupSubscriptions } from './graphql/resolvers.js';
+import { recaptchaMiddleware } from './middleware/recaptcha.js';
 
 const port = process.env.PORT || 3003;
 
@@ -73,6 +74,7 @@ async function startServer() {
   app.use(
     '/graphql',
     cors(),
+    recaptchaMiddleware,
     apolloExpressMiddleware(apolloServer, {
       context: async ({ req }) => ({
         headers: req.headers

@@ -1,5 +1,6 @@
 import { onRequest } from 'firebase-functions/v2/https';
 import type { Request, Response } from 'express';
+import { verifyRecaptchaToken } from './recaptcha.js';
 
 // Cache the Apollo Server instance to avoid re-initialization on every request
 let serverPromise: Promise<any> | null = null;
@@ -38,10 +39,27 @@ export const graphql = onRequest(
     maxInstances: 10,
     memory: '512MiB',
     timeoutSeconds: 60,
-    secrets: ['OPENWEATHER_API_KEY']
+    secrets: ['OPENWEATHER_API_KEY', 'RECAPTCHA_SECRET_KEY']
   },
   async (req: Request, res: Response) => {
     const server = await getServer();
+
+    // reCAPTCHA v3 verification
+    const recaptchaSecretKey = process.env.RECAPTCHA_SECRET_KEY;
+    if (recaptchaSecretKey) {
+      const token = req.headers['x-recaptcha-token'] as string;
+      const result = await verifyRecaptchaToken(token, recaptchaSecretKey);
+      if (!result.valid) {
+        console.warn('reCAPTCHA verification failed:', result.reason);
+        res.status(403).json({
+          errors: [{
+            message: result.reason || 'reCAPTCHA verification failed',
+            extensions: { code: 'UNAUTHENTICATED' }
+          }]
+        });
+        return;
+      }
+    }
 
     // Handle the GraphQL request directly without Express
     // Firebase already parses the body, so we use it directly

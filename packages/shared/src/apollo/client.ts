@@ -1,7 +1,9 @@
 import { ApolloClient, InMemoryCache, HttpLink, split } from '@apollo/client';
+import { setContext } from '@apollo/client/link/context';
 import { GraphQLWsLink } from '@apollo/client/link/subscriptions';
 import { getMainDefinition } from '@apollo/client/utilities';
 import { createClient } from 'graphql-ws';
+import { getRecaptchaToken } from '../utils/recaptcha';
 
 // Check if we're on the client side
 const isBrowser = typeof window !== 'undefined';
@@ -26,6 +28,23 @@ export function createApolloClient(graphqlUrl?: string, wsUrl?: string) {
   const httpLink = new HttpLink({
     uri: graphqlUrl || defaultGraphqlUrl
   });
+
+  // reCAPTCHA v3 link: attaches a fresh token to every HTTP request
+  const recaptchaLink = setContext(async (operation, { headers }) => {
+    // Convert PascalCase operation name to snake_case for reCAPTCHA action
+    const action = (operation.operationName || 'graphql')
+      .replace(/([a-z])([A-Z])/g, '$1_$2')
+      .toLowerCase();
+    const token = await getRecaptchaToken(action);
+    return {
+      headers: {
+        ...headers,
+        ...(token ? { 'x-recaptcha-token': token } : {})
+      }
+    };
+  });
+
+  const httpWithRecaptcha = recaptchaLink.concat(httpLink);
 
   let wsLink: GraphQLWsLink | null = null;
 
@@ -54,9 +73,9 @@ export function createApolloClient(graphqlUrl?: string, wsUrl?: string) {
           );
         },
         wsLink,
-        httpLink
+        httpWithRecaptcha
       )
-    : httpLink;
+    : httpWithRecaptcha;
 
   return new ApolloClient({
     link: splitLink,

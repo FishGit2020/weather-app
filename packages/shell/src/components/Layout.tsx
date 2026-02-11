@@ -8,6 +8,7 @@ import OfflineIndicator from './OfflineIndicator';
 export default function Layout() {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const toggleRef = useRef<HTMLButtonElement>(null);
   const location = useLocation();
 
   // Close mobile menu on route change
@@ -15,10 +16,14 @@ export default function Layout() {
     setMenuOpen(false);
   }, [location.pathname]);
 
-  // Close mobile menu when clicking outside
+  // Close mobile menu when clicking outside (excluding the toggle button)
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      if (
+        menuRef.current && !menuRef.current.contains(target) &&
+        toggleRef.current && !toggleRef.current.contains(target)
+      ) {
         setMenuOpen(false);
       }
     }
@@ -67,6 +72,7 @@ export default function Layout() {
               <UnitToggle />
               <ThemeToggle />
               <button
+                ref={toggleRef}
                 onClick={() => setMenuOpen(!menuOpen)}
                 className="p-2 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                 aria-label="Toggle menu"
