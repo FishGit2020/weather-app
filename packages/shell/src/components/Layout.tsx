@@ -5,6 +5,7 @@ import UnitToggle from './UnitToggle';
 import UserMenu from './UserMenu';
 import NotificationBell from './NotificationBell';
 import OfflineIndicator from './OfflineIndicator';
+import LanguageSelector from './LanguageSelector';
 
 export default function Layout() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -69,6 +70,7 @@ export default function Layout() {
               >
                 Compare
               </Link>
+              <LanguageSelector />
               <UnitToggle />
               <ThemeToggle />
               <NotificationBell />
@@ -77,6 +79,7 @@ export default function Layout() {
 
             {/* Mobile controls: small buttons + hamburger */}
             <div className="flex md:hidden items-center space-x-2">
+              <LanguageSelector />
               <UnitToggle />
               <ThemeToggle />
               <NotificationBell />
