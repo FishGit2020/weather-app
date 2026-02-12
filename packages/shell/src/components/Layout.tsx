@@ -106,7 +106,7 @@ export default function Layout() {
             </nav>
 
             {/* Mobile controls: small buttons + hamburger */}
-            <div className="flex md:hidden items-center space-x-2">
+            <div className="flex md:!hidden items-center space-x-2">
               <LanguageSelector />
               <UnitToggle />
               <SpeedToggle />
