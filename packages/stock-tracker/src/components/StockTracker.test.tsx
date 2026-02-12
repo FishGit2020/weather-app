@@ -1,10 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
+import { MockedProvider } from '@apollo/client/testing/react';
 import StockTracker from './StockTracker';
-
-// Mock fetch globally
-const mockFetch = vi.fn();
-global.fetch = mockFetch;
 
 // Mock localStorage
 const localStorageMock = (() => {
@@ -22,40 +19,56 @@ describe('StockTracker', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     localStorageMock.clear();
-    mockFetch.mockResolvedValue({
-      ok: true,
-      json: async () => ({ result: [] }),
-    });
   });
 
   it('renders the stock tracker title', () => {
-    render(<StockTracker />);
+    render(
+      <MockedProvider mocks={[]} addTypename={false}>
+        <StockTracker />
+      </MockedProvider>
+    );
 
     expect(screen.getByText('Stock Tracker')).toBeInTheDocument();
   });
 
   it('renders the search input', () => {
-    render(<StockTracker />);
+    render(
+      <MockedProvider mocks={[]} addTypename={false}>
+        <StockTracker />
+      </MockedProvider>
+    );
 
     const searchInput = screen.getByPlaceholderText('Search stocks...');
     expect(searchInput).toBeInTheDocument();
   });
 
   it('renders the watchlist section', () => {
-    render(<StockTracker />);
+    render(
+      <MockedProvider mocks={[]} addTypename={false}>
+        <StockTracker />
+      </MockedProvider>
+    );
 
     expect(screen.getByText('Watchlist')).toBeInTheDocument();
   });
 
   it('shows empty watchlist message when no stocks are saved', () => {
-    render(<StockTracker />);
+    render(
+      <MockedProvider mocks={[]} addTypename={false}>
+        <StockTracker />
+      </MockedProvider>
+    );
 
     expect(screen.getByText('No stocks in your watchlist yet.')).toBeInTheDocument();
     expect(screen.getByText('Search for stocks and add them to your watchlist.')).toBeInTheDocument();
   });
 
   it('renders search input with correct aria attributes', () => {
-    render(<StockTracker />);
+    render(
+      <MockedProvider mocks={[]} addTypename={false}>
+        <StockTracker />
+      </MockedProvider>
+    );
 
     const searchInput = screen.getByPlaceholderText('Search stocks...');
     expect(searchInput).toHaveAttribute('role', 'combobox');

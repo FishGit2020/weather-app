@@ -11,7 +11,7 @@ export default defineConfig({
       exposes: {
         './PodcastPlayer': './src/components/PodcastPlayer.tsx'
       },
-      shared: ['react', 'react-dom', 'react-router', '@weather/shared']
+      shared: ['react', 'react-dom', 'react-router', '@apollo/client', 'graphql', '@weather/shared']
     })
   ],
   build: {

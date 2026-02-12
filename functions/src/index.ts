@@ -26,10 +26,17 @@ async function getServer() {
       const { createResolvers } = await import('./resolvers.js');
 
       const apiKey = process.env.OPENWEATHER_API_KEY || '';
+      const finnhubKey = process.env.FINNHUB_API_KEY || '';
+      const podcastApiKey = process.env.PODCASTINDEX_API_KEY || '';
+      const podcastApiSecret = process.env.PODCASTINDEX_API_SECRET || '';
 
       const schema = makeExecutableSchema({
         typeDefs,
-        resolvers: createResolvers(() => apiKey)
+        resolvers: createResolvers(
+          () => apiKey,
+          () => finnhubKey,
+          () => ({ apiKey: podcastApiKey, apiSecret: podcastApiSecret })
+        )
       });
 
       const server = new ApolloServer({
@@ -51,7 +58,7 @@ export const graphql = onRequest(
     maxInstances: 10,
     memory: '512MiB',
     timeoutSeconds: 60,
-    secrets: ['OPENWEATHER_API_KEY', 'RECAPTCHA_SECRET_KEY']
+    secrets: ['OPENWEATHER_API_KEY', 'RECAPTCHA_SECRET_KEY', 'FINNHUB_API_KEY', 'PODCASTINDEX_API_KEY', 'PODCASTINDEX_API_SECRET']
   },
   async (req: Request, res: Response) => {
     const server = await getServer();

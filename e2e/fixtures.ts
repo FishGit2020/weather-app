@@ -257,6 +257,70 @@ export async function mockGraphQL(page: Page) {
       });
     }
 
+    // ─── Stock GraphQL queries ────────────────────────────────
+
+    if (operationName === 'SearchStocks') {
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          data: { searchStocks: mockStockSearchResults.result },
+        }),
+      });
+    }
+
+    if (operationName === 'GetStockQuote') {
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          data: { stockQuote: mockStockQuote },
+        }),
+      });
+    }
+
+    if (operationName === 'GetStockCandles') {
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          data: { stockCandles: mockStockCandles },
+        }),
+      });
+    }
+
+    // ─── Podcast GraphQL queries ──────────────────────────────
+
+    if (operationName === 'SearchPodcasts') {
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          data: { searchPodcasts: mockPodcastSearch },
+        }),
+      });
+    }
+
+    if (operationName === 'GetTrendingPodcasts') {
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          data: { trendingPodcasts: mockTrendingPodcasts },
+        }),
+      });
+    }
+
+    if (operationName === 'GetPodcastEpisodes') {
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          data: { podcastEpisodes: mockPodcastEpisodes },
+        }),
+      });
+    }
+
     // Default: pass through
     return route.continue();
   });

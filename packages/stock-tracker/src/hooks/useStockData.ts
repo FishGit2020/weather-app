@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
+import { useQuery, SEARCH_STOCKS, GET_STOCK_QUOTE, GET_STOCK_CANDLES } from '@weather/shared';
 
 // --- Types ---
 
@@ -30,6 +31,20 @@ export interface StockCandle {
   s: string;   // Status ("ok" or "no_data")
 }
 
+// --- GraphQL Response Types ---
+
+interface SearchStocksResponse {
+  searchStocks: StockSearchResult[];
+}
+
+interface StockQuoteResponse {
+  stockQuote: StockQuote | null;
+}
+
+interface StockCandlesResponse {
+  stockCandles: StockCandle | null;
+}
+
 // --- Hook: useStockSearch ---
 
 interface UseStockSearchReturn {
@@ -39,16 +54,12 @@ interface UseStockSearchReturn {
 }
 
 export function useStockSearch(query: string): UseStockSearchReturn {
-  const [results, setResults] = useState<StockSearchResult[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const abortController = useRef<AbortController | null>(null);
+  const [debouncedQuery, setDebouncedQuery] = useState('');
 
   useEffect(() => {
     if (query.length < 1) {
-      setResults([]);
-      setError(null);
+      setDebouncedQuery('');
       return;
     }
 
@@ -56,38 +67,8 @@ export function useStockSearch(query: string): UseStockSearchReturn {
       clearTimeout(debounceTimer.current);
     }
 
-    debounceTimer.current = setTimeout(async () => {
-      // Cancel any in-flight request
-      if (abortController.current) {
-        abortController.current.abort();
-      }
-      abortController.current = new AbortController();
-
-      setLoading(true);
-      setError(null);
-
-      try {
-        const response = await fetch(
-          `/stock/search?q=${encodeURIComponent(query)}`,
-          { signal: abortController.current.signal }
-        );
-
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}`);
-        }
-
-        const data = await response.json();
-        const items: StockSearchResult[] = data.result ?? data ?? [];
-        setResults(items);
-      } catch (err: unknown) {
-        if (err instanceof DOMException && err.name === 'AbortError') {
-          return;
-        }
-        setError(err instanceof Error ? err.message : 'Failed to search stocks');
-        setResults([]);
-      } finally {
-        setLoading(false);
-      }
+    debounceTimer.current = setTimeout(() => {
+      setDebouncedQuery(query);
     }, 300);
 
     return () => {
@@ -97,16 +78,19 @@ export function useStockSearch(query: string): UseStockSearchReturn {
     };
   }, [query]);
 
-  // Cleanup abort controller on unmount
-  useEffect(() => {
-    return () => {
-      if (abortController.current) {
-        abortController.current.abort();
-      }
-    };
-  }, []);
+  const { data, loading, error } = useQuery<SearchStocksResponse>(SEARCH_STOCKS, {
+    variables: { query: debouncedQuery },
+    skip: debouncedQuery.length < 1,
+    fetchPolicy: 'cache-first',
+  });
 
-  return { results, loading, error };
+  const results = debouncedQuery.length < 1 ? [] : (data?.searchStocks ?? []);
+
+  return {
+    results,
+    loading,
+    error: error?.message ?? null,
+  };
 }
 
 // --- Hook: useStockQuote ---
@@ -119,43 +103,18 @@ interface UseStockQuoteReturn {
 }
 
 export function useStockQuote(symbol: string | null): UseStockQuoteReturn {
-  const [quote, setQuote] = useState<StockQuote | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { data, loading, error, refetch } = useQuery<StockQuoteResponse>(GET_STOCK_QUOTE, {
+    variables: { symbol: symbol! },
+    skip: !symbol,
+    fetchPolicy: 'cache-and-network',
+  });
 
-  const fetchQuote = useCallback(async () => {
-    if (!symbol) {
-      setQuote(null);
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
-
-    try {
-      const response = await fetch(
-        `/stock/quote?symbol=${encodeURIComponent(symbol)}`
-      );
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
-      }
-
-      const data: StockQuote = await response.json();
-      setQuote(data);
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch quote');
-      setQuote(null);
-    } finally {
-      setLoading(false);
-    }
-  }, [symbol]);
-
-  useEffect(() => {
-    fetchQuote();
-  }, [fetchQuote]);
-
-  return { quote, loading, error, refetch: fetchQuote };
+  return {
+    quote: data?.stockQuote ?? null,
+    loading,
+    error: error?.message ?? null,
+    refetch: () => { refetch(); },
+  };
 }
 
 // --- Hook: useStockCandles ---
@@ -168,44 +127,19 @@ interface UseStockCandlesReturn {
 }
 
 export function useStockCandles(symbol: string | null): UseStockCandlesReturn {
-  const [candles, setCandles] = useState<StockCandle | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const now = useMemo(() => Math.floor(Date.now() / 1000), []);
+  const thirtyDaysAgo = useMemo(() => now - 30 * 24 * 60 * 60, [now]);
 
-  const fetchCandles = useCallback(async () => {
-    if (!symbol) {
-      setCandles(null);
-      return;
-    }
+  const { data, loading, error, refetch } = useQuery<StockCandlesResponse>(GET_STOCK_CANDLES, {
+    variables: { symbol: symbol!, from: thirtyDaysAgo, to: now },
+    skip: !symbol,
+    fetchPolicy: 'cache-and-network',
+  });
 
-    setLoading(true);
-    setError(null);
-
-    const now = Math.floor(Date.now() / 1000);
-    const thirtyDaysAgo = now - 30 * 24 * 60 * 60;
-
-    try {
-      const response = await fetch(
-        `/stock/candles?symbol=${encodeURIComponent(symbol)}&resolution=D&from=${thirtyDaysAgo}&to=${now}`
-      );
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
-      }
-
-      const data: StockCandle = await response.json();
-      setCandles(data);
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch candle data');
-      setCandles(null);
-    } finally {
-      setLoading(false);
-    }
-  }, [symbol]);
-
-  useEffect(() => {
-    fetchCandles();
-  }, [fetchCandles]);
-
-  return { candles, loading, error, refetch: fetchCandles };
+  return {
+    candles: data?.stockCandles ?? null,
+    loading,
+    error: error?.message ?? null,
+    refetch: () => { refetch(); },
+  };
 }

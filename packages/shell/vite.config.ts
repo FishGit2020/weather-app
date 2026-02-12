@@ -34,7 +34,7 @@ export default defineConfig({
         stockTracker: stockTrackerRemote,
         podcastPlayer: podcastPlayerRemote
       },
-      shared: ['react', 'react-dom', 'react-router', '@apollo/client', '@weather/shared']
+      shared: ['react', 'react-dom', 'react-router', '@apollo/client', 'graphql', '@weather/shared']
     }),
     VitePWA({
       registerType: 'autoUpdate',

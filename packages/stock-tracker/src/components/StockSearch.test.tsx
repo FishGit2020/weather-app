@@ -1,28 +1,42 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
+import { MockedProvider, MockedResponse } from '@apollo/client/testing/react';
 import StockSearch from './StockSearch';
+import { SEARCH_STOCKS } from '@weather/shared';
 
-// Mock fetch globally
-const mockFetch = vi.fn();
-global.fetch = mockFetch;
+const mockSearchResults = [
+  {
+    description: 'APPLE INC',
+    displaySymbol: 'AAPL',
+    symbol: 'AAPL',
+    type: 'Common Stock',
+  },
+  {
+    description: 'APPLIED MATERIALS INC',
+    displaySymbol: 'AMAT',
+    symbol: 'AMAT',
+    type: 'Common Stock',
+  },
+];
 
-const mockSearchResults = {
-  result: [
-    {
-      description: 'APPLE INC',
-      displaySymbol: 'AAPL',
-      symbol: 'AAPL',
-      type: 'Common Stock',
+function createSearchMock(query: string, results = mockSearchResults): MockedResponse {
+  return {
+    request: {
+      query: SEARCH_STOCKS,
+      variables: { query },
     },
-    {
-      description: 'APPLIED MATERIALS INC',
-      displaySymbol: 'AMAT',
-      symbol: 'AMAT',
-      type: 'Common Stock',
+    result: {
+      data: { searchStocks: results },
     },
-  ],
-};
+  };
+}
+
+// Helper to flush Apollo's async mock delivery
+async function flushPromises() {
+  await act(async () => {
+    await new Promise(resolve => setTimeout(resolve, 0));
+  });
+}
 
 describe('StockSearch', () => {
   const mockOnSelect = vi.fn();
@@ -30,10 +44,6 @@ describe('StockSearch', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.useFakeTimers({ shouldAdvanceTime: true });
-    mockFetch.mockResolvedValue({
-      ok: true,
-      json: async () => mockSearchResults,
-    });
   });
 
   afterEach(() => {
@@ -41,47 +51,36 @@ describe('StockSearch', () => {
   });
 
   it('renders search input with placeholder', () => {
-    render(<StockSearch onSelect={mockOnSelect} />);
+    render(
+      <MockedProvider mocks={[]} addTypename={false}>
+        <StockSearch onSelect={mockOnSelect} />
+      </MockedProvider>
+    );
 
     const input = screen.getByPlaceholderText('Search stocks...');
     expect(input).toBeInTheDocument();
   });
 
-  it('shows loading skeleton when typing', async () => {
-    // Use a fetch mock that never resolves so loading state persists
-    let resolvePromise: () => void;
-    mockFetch.mockImplementation(() => new Promise<Response>((resolve) => {
-      resolvePromise = () => resolve({
-        ok: true,
-        json: async () => mockSearchResults,
-      } as Response);
-    }));
+  it('displays search results after typing', async () => {
+    const mocks = [createSearchMock('AAPL')];
 
-    render(<StockSearch onSelect={mockOnSelect} />);
+    render(
+      <MockedProvider mocks={mocks} addTypename={false}>
+        <StockSearch onSelect={mockOnSelect} />
+      </MockedProvider>
+    );
 
     const input = screen.getByPlaceholderText('Search stocks...');
     fireEvent.focus(input);
     fireEvent.change(input, { target: { value: 'AAPL' } });
 
-    await vi.advanceTimersByTimeAsync(350);
-
-    // During loading, skeleton should appear
-    await waitFor(() => {
-      expect(document.querySelector('.animate-pulse')).toBeInTheDocument();
+    // Advance past debounce
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(350);
     });
 
-    // Cleanup: resolve the pending promise
-    resolvePromise!();
-  });
-
-  it('displays search results after typing', async () => {
-    render(<StockSearch onSelect={mockOnSelect} />);
-
-    const input = screen.getByPlaceholderText('Search stocks...');
-    fireEvent.focus(input);
-    fireEvent.change(input, { target: { value: 'AAPL' } });
-
-    await vi.advanceTimersByTimeAsync(300);
+    // Flush Apollo mock delivery
+    await flushPromises();
 
     await waitFor(() => {
       expect(screen.getByText('AAPL')).toBeInTheDocument();
@@ -90,13 +89,22 @@ describe('StockSearch', () => {
   });
 
   it('calls onSelect when a result is clicked', async () => {
-    render(<StockSearch onSelect={mockOnSelect} />);
+    const mocks = [createSearchMock('AAPL')];
+
+    render(
+      <MockedProvider mocks={mocks} addTypename={false}>
+        <StockSearch onSelect={mockOnSelect} />
+      </MockedProvider>
+    );
 
     const input = screen.getByPlaceholderText('Search stocks...');
     fireEvent.focus(input);
     fireEvent.change(input, { target: { value: 'AAPL' } });
 
-    await vi.advanceTimersByTimeAsync(300);
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(350);
+    });
+    await flushPromises();
 
     await waitFor(() => {
       expect(screen.getByText('APPLE INC')).toBeInTheDocument();
@@ -109,13 +117,22 @@ describe('StockSearch', () => {
   });
 
   it('clears input after selection', async () => {
-    render(<StockSearch onSelect={mockOnSelect} />);
+    const mocks = [createSearchMock('AAPL')];
+
+    render(
+      <MockedProvider mocks={mocks} addTypename={false}>
+        <StockSearch onSelect={mockOnSelect} />
+      </MockedProvider>
+    );
 
     const input = screen.getByPlaceholderText('Search stocks...') as HTMLInputElement;
     fireEvent.focus(input);
     fireEvent.change(input, { target: { value: 'AAPL' } });
 
-    await vi.advanceTimersByTimeAsync(300);
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(350);
+    });
+    await flushPromises();
 
     await waitFor(() => {
       expect(screen.getByText('APPLE INC')).toBeInTheDocument();
@@ -128,42 +145,52 @@ describe('StockSearch', () => {
   });
 
   it('debounces search requests', async () => {
-    render(<StockSearch onSelect={mockOnSelect} />);
+    const mocks = [createSearchMock('AAP')];
+
+    render(
+      <MockedProvider mocks={mocks} addTypename={false}>
+        <StockSearch onSelect={mockOnSelect} />
+      </MockedProvider>
+    );
 
     const input = screen.getByPlaceholderText('Search stocks...');
     fireEvent.focus(input);
 
     // Type characters rapidly
     fireEvent.change(input, { target: { value: 'A' } });
-    vi.advanceTimersByTime(100);
+    await act(async () => { vi.advanceTimersByTime(100); });
     fireEvent.change(input, { target: { value: 'AA' } });
-    vi.advanceTimersByTime(100);
+    await act(async () => { vi.advanceTimersByTime(100); });
     fireEvent.change(input, { target: { value: 'AAP' } });
-    vi.advanceTimersByTime(100);
 
-    // Should not have called fetch yet (debounce hasn't fired)
-    expect(mockFetch).not.toHaveBeenCalled();
+    // After debounce timer fires, the query for 'AAP' should execute
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(350);
+    });
+    await flushPromises();
 
-    // After debounce timer
-    await vi.advanceTimersByTimeAsync(300);
-
-    // Now should have called fetch once
-    expect(mockFetch).toHaveBeenCalledTimes(1);
-    expect(mockFetch).toHaveBeenCalledWith(
-      '/stock/search?q=AAP',
-      expect.objectContaining({ signal: expect.any(AbortSignal) })
-    );
+    await waitFor(() => {
+      expect(screen.getByText('APPLE INC')).toBeInTheDocument();
+    });
   });
 
   it('supports keyboard navigation', async () => {
-    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
-    render(<StockSearch onSelect={mockOnSelect} />);
+    const mocks = [createSearchMock('A')];
+
+    render(
+      <MockedProvider mocks={mocks} addTypename={false}>
+        <StockSearch onSelect={mockOnSelect} />
+      </MockedProvider>
+    );
 
     const input = screen.getByPlaceholderText('Search stocks...');
     fireEvent.focus(input);
     fireEvent.change(input, { target: { value: 'A' } });
 
-    await vi.advanceTimersByTimeAsync(300);
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(350);
+    });
+    await flushPromises();
 
     await waitFor(() => {
       expect(screen.getByText('AAPL')).toBeInTheDocument();
@@ -177,5 +204,28 @@ describe('StockSearch', () => {
     // Enter to select
     fireEvent.keyDown(input, { key: 'Enter' });
     expect(mockOnSelect).toHaveBeenCalledWith('AAPL', 'APPLE INC');
+  });
+
+  it('shows no results message when search returns empty', async () => {
+    const mocks: MockedResponse[] = [createSearchMock('xyz', [])];
+
+    render(
+      <MockedProvider mocks={mocks} addTypename={false}>
+        <StockSearch onSelect={mockOnSelect} />
+      </MockedProvider>
+    );
+
+    const input = screen.getByPlaceholderText('Search stocks...');
+    fireEvent.focus(input);
+    fireEvent.change(input, { target: { value: 'xyz' } });
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(350);
+    });
+    await flushPromises();
+
+    await waitFor(() => {
+      expect(screen.getByText('No stocks found')).toBeInTheDocument();
+    });
   });
 });

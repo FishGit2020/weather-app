@@ -157,6 +157,104 @@ export const REVERSE_GEOCODE = gql`
   }
 `;
 
+// ─── Stock Queries ──────────────────────────────────────────
+
+export const SEARCH_STOCKS = gql`
+  query SearchStocks($query: String!) {
+    searchStocks(query: $query) {
+      description
+      displaySymbol
+      symbol
+      type
+    }
+  }
+`;
+
+export const GET_STOCK_QUOTE = gql`
+  query GetStockQuote($symbol: String!) {
+    stockQuote(symbol: $symbol) {
+      c
+      d
+      dp
+      h
+      l
+      o
+      pc
+      t
+    }
+  }
+`;
+
+export const GET_STOCK_CANDLES = gql`
+  query GetStockCandles($symbol: String!, $resolution: String, $from: Int!, $to: Int!) {
+    stockCandles(symbol: $symbol, resolution: $resolution, from: $from, to: $to) {
+      c
+      h
+      l
+      o
+      t
+      v
+      s
+    }
+  }
+`;
+
+// ─── Podcast Queries ────────────────────────────────────────
+
+export const SEARCH_PODCASTS = gql`
+  query SearchPodcasts($query: String!) {
+    searchPodcasts(query: $query) {
+      feeds {
+        id
+        title
+        author
+        image
+        description
+        categories
+        episodeCount
+        language
+      }
+      count
+    }
+  }
+`;
+
+export const GET_TRENDING_PODCASTS = gql`
+  query GetTrendingPodcasts {
+    trendingPodcasts {
+      feeds {
+        id
+        title
+        author
+        image
+        description
+        categories
+        episodeCount
+        language
+      }
+      count
+    }
+  }
+`;
+
+export const GET_PODCAST_EPISODES = gql`
+  query GetPodcastEpisodes($feedId: Int!) {
+    podcastEpisodes(feedId: $feedId) {
+      items {
+        id
+        title
+        description
+        datePublished
+        duration
+        enclosureUrl
+        image
+        feedId
+      }
+      count
+    }
+  }
+`;
+
 export const WEATHER_UPDATES = gql`
   ${WEATHER_CONDITION_FRAGMENT}
   subscription WeatherUpdates($lat: Float!, $lon: Float!) {

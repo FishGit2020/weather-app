@@ -1,6 +1,6 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React from 'react';
 import { useTranslation } from '@weather/shared';
-import { StockQuote } from '../hooks/useStockData';
+import { useStockQuote, useStockCandles } from '../hooks/useStockData';
 import StockCard from './StockCard';
 
 interface WatchlistItem {
@@ -14,58 +14,34 @@ interface Props {
   onSelectStock: (symbol: string) => void;
 }
 
-interface QuoteCache {
-  [symbol: string]: {
-    quote: StockQuote | null;
-    loading: boolean;
-    sparklineData?: number[];
-  };
+function WatchlistCard({ item, onToggleWatchlist, onSelectStock }: {
+  item: WatchlistItem;
+  onToggleWatchlist: (symbol: string) => void;
+  onSelectStock: (symbol: string) => void;
+}) {
+  const { quote, loading: quoteLoading } = useStockQuote(item.symbol);
+  const { candles, loading: candlesLoading } = useStockCandles(item.symbol);
+
+  const sparklineData = candles && candles.s !== 'no_data' && candles.c
+    ? candles.c
+    : undefined;
+
+  return (
+    <StockCard
+      symbol={item.symbol}
+      companyName={item.companyName}
+      quote={quote}
+      loading={quoteLoading && !quote}
+      isInWatchlist={true}
+      onToggleWatchlist={onToggleWatchlist}
+      onClick={onSelectStock}
+      sparklineData={sparklineData}
+    />
+  );
 }
 
 export default function Watchlist({ watchlist, onToggleWatchlist, onSelectStock }: Props) {
   const { t } = useTranslation();
-  const [quoteCache, setQuoteCache] = useState<QuoteCache>({});
-
-  const fetchQuote = useCallback(async (symbol: string) => {
-    setQuoteCache(prev => ({
-      ...prev,
-      [symbol]: { ...prev[symbol], loading: true, quote: prev[symbol]?.quote ?? null },
-    }));
-
-    try {
-      const [quoteRes, candleRes] = await Promise.all([
-        fetch(`/stock/quote?symbol=${encodeURIComponent(symbol)}`),
-        fetch(`/stock/candles?symbol=${encodeURIComponent(symbol)}&resolution=D&from=${Math.floor(Date.now() / 1000) - 7 * 24 * 60 * 60}&to=${Math.floor(Date.now() / 1000)}`),
-      ]);
-
-      const quoteData: StockQuote = quoteRes.ok ? await quoteRes.json() : null;
-      let sparklineData: number[] | undefined;
-
-      if (candleRes.ok) {
-        const candleData = await candleRes.json();
-        if (candleData.s !== 'no_data' && candleData.c) {
-          sparklineData = candleData.c;
-        }
-      }
-
-      setQuoteCache(prev => ({
-        ...prev,
-        [symbol]: { quote: quoteData, loading: false, sparklineData },
-      }));
-    } catch {
-      setQuoteCache(prev => ({
-        ...prev,
-        [symbol]: { ...prev[symbol], loading: false },
-      }));
-    }
-  }, []);
-
-  // Fetch quotes for all watchlist items
-  useEffect(() => {
-    watchlist.forEach(item => {
-      fetchQuote(item.symbol);
-    });
-  }, [watchlist, fetchQuote]);
 
   if (watchlist.length === 0) {
     return (
@@ -85,22 +61,14 @@ export default function Watchlist({ watchlist, onToggleWatchlist, onSelectStock 
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-      {watchlist.map(item => {
-        const cached = quoteCache[item.symbol];
-        return (
-          <StockCard
-            key={item.symbol}
-            symbol={item.symbol}
-            companyName={item.companyName}
-            quote={cached?.quote ?? null}
-            loading={cached?.loading ?? true}
-            isInWatchlist={true}
-            onToggleWatchlist={onToggleWatchlist}
-            onClick={onSelectStock}
-            sparklineData={cached?.sparklineData}
-          />
-        );
-      })}
+      {watchlist.map(item => (
+        <WatchlistCard
+          key={item.symbol}
+          item={item}
+          onToggleWatchlist={onToggleWatchlist}
+          onSelectStock={onSelectStock}
+        />
+      ))}
     </div>
   );
 }

@@ -90,7 +90,12 @@ export function createApolloClient(graphqlUrl?: string, wsUrl?: string) {
             weather: { keyArgs: ['lat', 'lon'] },
             currentWeather: { keyArgs: ['lat', 'lon'] },
             forecast: { keyArgs: ['lat', 'lon'] },
-            hourlyForecast: { keyArgs: ['lat', 'lon'] }
+            hourlyForecast: { keyArgs: ['lat', 'lon'] },
+            stockQuote: { keyArgs: ['symbol'] },
+            stockCandles: { keyArgs: ['symbol', 'from', 'to'] },
+            searchStocks: { keyArgs: ['query'] },
+            searchPodcasts: { keyArgs: ['query'] },
+            podcastEpisodes: { keyArgs: ['feedId'] }
           }
         }
       }

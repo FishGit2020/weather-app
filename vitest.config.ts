@@ -10,6 +10,7 @@ export default defineConfig({
       'weatherDisplay/WeatherDisplay': resolve(__dirname, './packages/shell/src/test/mocks/WeatherDisplayMock.tsx'),
       'stockTracker/StockTracker': resolve(__dirname, './packages/shell/src/test/mocks/StockTrackerMock.tsx'),
       'podcastPlayer/PodcastPlayer': resolve(__dirname, './packages/shell/src/test/mocks/PodcastPlayerMock.tsx'),
+      '@weather/shared': resolve(__dirname, './packages/shared/src'),
     }
   },
   test: {

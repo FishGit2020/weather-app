@@ -1,8 +1,11 @@
 import axios from 'axios';
+import crypto from 'crypto';
 import NodeCache from 'node-cache';
 
 // Simple in-memory cache
 const weatherCache = new NodeCache({ stdTTL: 600, checkperiod: 120 });
+const stockCache = new NodeCache({ stdTTL: 30, checkperiod: 10 });
+const podcastCache = new NodeCache({ stdTTL: 300, checkperiod: 60 });
 
 function getCacheKey(lat: number, lon: number, type: string): string {
   return `${type}:${lat.toFixed(2)}:${lon.toFixed(2)}`;
@@ -184,8 +187,111 @@ async function reverseGeocode(apiKey: string, lat: number, lon: number): Promise
   return null;
 }
 
+// ─── Stock API helpers (Finnhub) ─────────────────────────────
+
+async function searchStocks(apiKey: string, query: string) {
+  const cacheKey = `stock:search:${query}`;
+  const cached = stockCache.get<any>(cacheKey);
+  if (cached) return cached;
+
+  const response = await axios.get(`https://finnhub.io/api/v1/search`, {
+    params: { q: query },
+    headers: { 'X-Finnhub-Token': apiKey },
+    timeout: 10000,
+  });
+  const results = response.data.result ?? [];
+  stockCache.set(cacheKey, results, 300);
+  return results;
+}
+
+async function getStockQuote(apiKey: string, symbol: string) {
+  const cacheKey = `stock:quote:${symbol}`;
+  const cached = stockCache.get<any>(cacheKey);
+  if (cached) return cached;
+
+  const response = await axios.get(`https://finnhub.io/api/v1/quote`, {
+    params: { symbol },
+    headers: { 'X-Finnhub-Token': apiKey },
+    timeout: 10000,
+  });
+  stockCache.set(cacheKey, response.data, 30);
+  return response.data;
+}
+
+async function getStockCandles(apiKey: string, symbol: string, resolution: string, from: number, to: number) {
+  const cacheKey = `stock:candles:${symbol}:${resolution}:${from}:${to}`;
+  const cached = stockCache.get<any>(cacheKey);
+  if (cached) return cached;
+
+  const response = await axios.get(`https://finnhub.io/api/v1/stock/candle`, {
+    params: { symbol, resolution, from, to },
+    headers: { 'X-Finnhub-Token': apiKey },
+    timeout: 10000,
+  });
+  stockCache.set(cacheKey, response.data, 300);
+  return response.data;
+}
+
+// ─── Podcast API helpers (PodcastIndex) ──────────────────────
+
+function getPodcastIndexHeaders(apiKey: string, apiSecret: string): Record<string, string> {
+  const ts = Math.floor(Date.now() / 1000);
+  const hash = crypto.createHash('sha1').update(`${apiKey}${apiSecret}${ts}`).digest('hex');
+  return {
+    'X-Auth-Key': apiKey,
+    'X-Auth-Date': String(ts),
+    'Authorization': hash,
+    'User-Agent': 'MyCircle/1.0',
+  };
+}
+
+async function searchPodcastsAPI(apiKey: string, apiSecret: string, query: string) {
+  const cacheKey = `podcast:search:${query}`;
+  const cached = podcastCache.get<any>(cacheKey);
+  if (cached) return cached;
+
+  const headers = getPodcastIndexHeaders(apiKey, apiSecret);
+  const response = await axios.get(`https://api.podcastindex.org/api/1.0/search/byterm`, {
+    params: { q: query },
+    headers,
+    timeout: 10000,
+  });
+  podcastCache.set(cacheKey, response.data, 300);
+  return response.data;
+}
+
+async function getTrendingPodcastsAPI(apiKey: string, apiSecret: string) {
+  const cacheKey = 'podcast:trending';
+  const cached = podcastCache.get<any>(cacheKey);
+  if (cached) return cached;
+
+  const headers = getPodcastIndexHeaders(apiKey, apiSecret);
+  const response = await axios.get(`https://api.podcastindex.org/api/1.0/podcasts/trending`, {
+    params: { max: 20 },
+    headers,
+    timeout: 10000,
+  });
+  podcastCache.set(cacheKey, response.data, 3600);
+  return response.data;
+}
+
+async function getPodcastEpisodesAPI(apiKey: string, apiSecret: string, feedId: number) {
+  const cacheKey = `podcast:episodes:${feedId}`;
+  const cached = podcastCache.get<any>(cacheKey);
+  if (cached) return cached;
+
+  const headers = getPodcastIndexHeaders(apiKey, apiSecret);
+  const response = await axios.get(`https://api.podcastindex.org/api/1.0/episodes/byfeedid`, {
+    params: { id: feedId, max: 20 },
+    headers,
+    timeout: 10000,
+  });
+  podcastCache.set(cacheKey, response.data, 600);
+  return response.data;
+}
+
 // Resolver factory
-export function createResolvers(getApiKey: () => string) {
+export function createResolvers(getApiKey: () => string, getFinnhubKey?: () => string, getPodcastKeys?: () => { apiKey: string; apiSecret: string }) {
   return {
     Query: {
       weather: async (_: any, { lat, lon }: { lat: number; lon: number }) => {
@@ -263,7 +369,47 @@ export function createResolvers(getApiKey: () => string) {
       reverseGeocode: async (_: any, { lat, lon }: { lat: number; lon: number }) => {
         const apiKey = getApiKey();
         return await reverseGeocode(apiKey, lat, lon);
-      }
+      },
+
+      // ─── Stock Resolvers ────────────────────────────────────
+
+      searchStocks: async (_: any, { query }: { query: string }) => {
+        const finnhubKey = getFinnhubKey?.() || '';
+        if (!finnhubKey) throw new Error('FINNHUB_API_KEY not configured');
+        return await searchStocks(finnhubKey, query);
+      },
+
+      stockQuote: async (_: any, { symbol }: { symbol: string }) => {
+        const finnhubKey = getFinnhubKey?.() || '';
+        if (!finnhubKey) throw new Error('FINNHUB_API_KEY not configured');
+        return await getStockQuote(finnhubKey, symbol);
+      },
+
+      stockCandles: async (_: any, { symbol, resolution = 'D', from, to }: { symbol: string; resolution?: string; from: number; to: number }) => {
+        const finnhubKey = getFinnhubKey?.() || '';
+        if (!finnhubKey) throw new Error('FINNHUB_API_KEY not configured');
+        return await getStockCandles(finnhubKey, symbol, resolution, from, to);
+      },
+
+      // ─── Podcast Resolvers ──────────────────────────────────
+
+      searchPodcasts: async (_: any, { query }: { query: string }) => {
+        const keys = getPodcastKeys?.();
+        if (!keys?.apiKey || !keys?.apiSecret) throw new Error('PodcastIndex API credentials not configured');
+        return await searchPodcastsAPI(keys.apiKey, keys.apiSecret, query);
+      },
+
+      trendingPodcasts: async () => {
+        const keys = getPodcastKeys?.();
+        if (!keys?.apiKey || !keys?.apiSecret) throw new Error('PodcastIndex API credentials not configured');
+        return await getTrendingPodcastsAPI(keys.apiKey, keys.apiSecret);
+      },
+
+      podcastEpisodes: async (_: any, { feedId }: { feedId: number }) => {
+        const keys = getPodcastKeys?.();
+        if (!keys?.apiKey || !keys?.apiSecret) throw new Error('PodcastIndex API credentials not configured');
+        return await getPodcastEpisodesAPI(keys.apiKey, keys.apiSecret, feedId);
+      },
     }
   };
 }
