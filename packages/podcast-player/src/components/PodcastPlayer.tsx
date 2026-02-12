@@ -4,23 +4,24 @@ import { usePodcastEpisodes } from '../hooks/usePodcastData';
 import type { Podcast, Episode } from '../hooks/usePodcastData';
 import PodcastSearch from './PodcastSearch';
 import TrendingPodcasts from './TrendingPodcasts';
+import SubscribedPodcasts from './SubscribedPodcasts';
 import EpisodeList from './EpisodeList';
 import AudioPlayer from './AudioPlayer';
 import './PodcastPlayer.css';
 
 const SUBSCRIPTIONS_KEY = 'podcast-subscriptions';
 
-function loadSubscriptions(): Set<number> {
+function loadSubscriptions(): Set<string> {
   try {
     const stored = localStorage.getItem(SUBSCRIPTIONS_KEY);
     if (stored) {
-      return new Set(JSON.parse(stored));
+      return new Set(JSON.parse(stored).map(String));
     }
   } catch { /* ignore */ }
   return new Set();
 }
 
-function saveSubscriptions(ids: Set<number>) {
+function saveSubscriptions(ids: Set<string>) {
   try {
     localStorage.setItem(SUBSCRIPTIONS_KEY, JSON.stringify([...ids]));
   } catch { /* ignore */ }
@@ -31,7 +32,8 @@ export default function PodcastPlayer() {
   const [selectedPodcast, setSelectedPodcast] = useState<Podcast | null>(null);
   const [currentEpisode, setCurrentEpisode] = useState<Episode | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [subscribedIds, setSubscribedIds] = useState<Set<number>>(loadSubscriptions);
+  const [subscribedIds, setSubscribedIds] = useState<Set<string>>(loadSubscriptions);
+  const [activeTab, setActiveTab] = useState<'discover' | 'subscribed'>('discover');
 
   const feedId = selectedPodcast?.id ?? null;
   const {
@@ -65,10 +67,11 @@ export default function PodcastPlayer() {
   const handleToggleSubscribe = useCallback((podcast: Podcast) => {
     setSubscribedIds(prev => {
       const next = new Set(prev);
-      if (next.has(podcast.id)) {
-        next.delete(podcast.id);
+      const id = String(podcast.id);
+      if (next.has(id)) {
+        next.delete(id);
       } else {
-        next.add(podcast.id);
+        next.add(id);
       }
       saveSubscriptions(next);
       return next;
@@ -90,6 +93,37 @@ export default function PodcastPlayer() {
         </h1>
         <PodcastSearch onSelectPodcast={handleSelectPodcast} />
       </div>
+
+      {/* Tab bar */}
+      {!selectedPodcast && (
+        <div className="flex gap-1 mb-6 border-b border-gray-200 dark:border-gray-700">
+          <button
+            onClick={() => setActiveTab('discover')}
+            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+              activeTab === 'discover'
+                ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+            }`}
+          >
+            {t('podcasts.trending')}
+          </button>
+          <button
+            onClick={() => setActiveTab('subscribed')}
+            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+              activeTab === 'subscribed'
+                ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+            }`}
+          >
+            {t('podcasts.subscriptions')}
+            {subscribedIds.size > 0 && (
+              <span className="ml-1.5 inline-flex items-center justify-center w-5 h-5 text-xs rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400">
+                {subscribedIds.size}
+              </span>
+            )}
+          </button>
+        </div>
+      )}
 
       {/* Content area */}
       {selectedPodcast ? (
@@ -153,17 +187,17 @@ export default function PodcastPlayer() {
                   <button
                     onClick={() => handleToggleSubscribe(selectedPodcast)}
                     className={`text-sm font-medium px-4 py-2 rounded-full transition ${
-                      subscribedIds.has(selectedPodcast.id)
+                      subscribedIds.has(String(selectedPodcast.id))
                         ? 'bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/50'
                         : 'bg-blue-500 dark:bg-blue-600 text-white hover:bg-blue-600 dark:hover:bg-blue-500'
                     }`}
                     aria-label={
-                      subscribedIds.has(selectedPodcast.id)
+                      subscribedIds.has(String(selectedPodcast.id))
                         ? `${t('podcasts.unsubscribe')} ${selectedPodcast.title}`
                         : `${t('podcasts.subscribe')} ${selectedPodcast.title}`
                     }
                   >
-                    {subscribedIds.has(selectedPodcast.id)
+                    {subscribedIds.has(String(selectedPodcast.id))
                       ? t('podcasts.unsubscribe')
                       : t('podcasts.subscribe')}
                   </button>
@@ -187,11 +221,17 @@ export default function PodcastPlayer() {
             />
           </div>
         </div>
-      ) : (
+      ) : activeTab === 'discover' ? (
         <TrendingPodcasts
           onSelectPodcast={handleSelectPodcast}
           subscribedIds={subscribedIds}
           onToggleSubscribe={handleToggleSubscribe}
+        />
+      ) : (
+        <SubscribedPodcasts
+          subscribedIds={subscribedIds}
+          onSelectPodcast={handleSelectPodcast}
+          onUnsubscribe={handleToggleSubscribe}
         />
       )}
 

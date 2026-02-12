@@ -35,15 +35,15 @@ test.describe('Navigation Integration', () => {
     await expect(page.locator('#root')).toBeVisible({ timeout: 15_000 });
 
     // Check nav links exist
-    const weatherLink = page.getByRole('link', { name: /weather/i });
+    const homeLink = page.getByRole('link', { name: /home/i });
     const stocksLink = page.getByRole('link', { name: /stock/i });
     const podcastsLink = page.getByRole('link', { name: /podcast/i });
 
-    const hasWeather = await weatherLink.isVisible().catch(() => false);
+    const hasHome = await homeLink.isVisible().catch(() => false);
     const hasStocks = await stocksLink.isVisible().catch(() => false);
     const hasPodcasts = await podcastsLink.isVisible().catch(() => false);
 
     // At least one nav link should be visible
-    expect(hasWeather || hasStocks || hasPodcasts).toBe(true);
+    expect(hasHome || hasStocks || hasPodcasts).toBe(true);
   });
 });

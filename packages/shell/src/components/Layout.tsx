@@ -83,7 +83,7 @@ export default function Layout() {
             {/* Desktop nav (hidden on mobile) */}
             <nav aria-label="Main navigation" className="hidden md:flex items-center space-x-4">
               <Link to="/" className={navLinkClass('/')}>
-                {t('nav.weather')}
+                {t('nav.home')}
               </Link>
               <Link to="/stocks" className={navLinkClass('/stocks')}>
                 {t('nav.stocks')}
@@ -93,9 +93,6 @@ export default function Layout() {
               </Link>
               <Link to="/ai" className={navLinkClass('/ai')}>
                 {t('nav.ai')}
-              </Link>
-              <Link to="/compare" className={navLinkClass('/compare')}>
-                {t('nav.compare')}
               </Link>
               <LanguageSelector />
               <UnitToggle />
@@ -135,7 +132,7 @@ export default function Layout() {
           {menuOpen && (
             <div ref={menuRef} className="md:hidden mt-3 pt-3 border-t border-gray-200 dark:border-gray-700 space-y-1">
               <Link to="/" className={mobileNavLinkClass('/')}>
-                {t('nav.weather')}
+                {t('nav.home')}
               </Link>
               <Link to="/stocks" className={mobileNavLinkClass('/stocks')}>
                 {t('nav.stocks')}
@@ -145,9 +142,6 @@ export default function Layout() {
               </Link>
               <Link to="/ai" className={mobileNavLinkClass('/ai')}>
                 {t('nav.ai')}
-              </Link>
-              <Link to="/compare" className={mobileNavLinkClass('/compare')}>
-                {t('nav.compare')}
               </Link>
               <div className="px-3 py-2">
                 <UserMenu />

@@ -69,6 +69,19 @@ const en = {
   'weather.refreshData': 'Refresh weather data',
   'weather.paused': 'Paused',
 
+  // Dashboard home
+  'dashboard.title': 'Dashboard',
+  'dashboard.weather': 'Weather',
+  'dashboard.stocks': 'Stocks',
+  'dashboard.podcasts': 'Podcasts',
+  'dashboard.ai': 'AI Assistant',
+  'dashboard.recentSearches': 'Recent Searches',
+  'dashboard.noFavorites': 'No favorite cities yet',
+  'dashboard.noWatchlist': 'No stocks in watchlist',
+  'dashboard.noSubscriptions': 'No podcast subscriptions',
+  'dashboard.viewAll': 'View All',
+  'dashboard.quickAccess': 'Quick Access',
+
   // Dashboard settings
   'dashboard.settings': 'Dashboard settings',
   'dashboard.customizeWidgets': 'Customize dashboard widgets',
@@ -372,6 +385,19 @@ const es: Record<TranslationKey, string> = {
   'weather.whatToWear': 'Qu\u00e9 ponerse',
   'weather.refreshData': 'Actualizar datos del clima',
   'weather.paused': 'Pausado',
+
+  // Dashboard home
+  'dashboard.title': 'Panel',
+  'dashboard.weather': 'Clima',
+  'dashboard.stocks': 'Acciones',
+  'dashboard.podcasts': 'Podcasts',
+  'dashboard.ai': 'Asistente IA',
+  'dashboard.recentSearches': 'B\u00fasquedas recientes',
+  'dashboard.noFavorites': 'Sin ciudades favoritas a\u00fan',
+  'dashboard.noWatchlist': 'Sin acciones en la lista',
+  'dashboard.noSubscriptions': 'Sin suscripciones a podcasts',
+  'dashboard.viewAll': 'Ver todo',
+  'dashboard.quickAccess': 'Acceso r\u00e1pido',
 
   // Dashboard settings
   'dashboard.settings': 'Configuraci\u00f3n del panel',

@@ -10,7 +10,19 @@ import WhatToWear from './WhatToWear';
 import SunriseSunset from './SunriseSunset';
 import WeatherMap from './WeatherMap';
 import DashboardSettings, { loadWidgetVisibility, WidgetVisibility } from './DashboardSettings';
+import WeatherComparison from './WeatherComparison';
 import './WeatherDisplay.css';
+
+function getRecentCitiesFromStorage(): Array<{ id: string; name: string; country?: string; lat: number; lon: number }> {
+  try {
+    const stored = sessionStorage.getItem('selectedCity');
+    if (stored) {
+      const city = JSON.parse(stored);
+      return [{ id: `${city.lat},${city.lon}`, name: city.name, country: city.country, lat: city.lat, lon: city.lon }];
+    }
+  } catch { /* ignore */ }
+  return [];
+}
 
 export default function WeatherDisplay() {
   const { coords } = useParams<{ coords: string }>();
@@ -150,16 +162,20 @@ export default function WeatherDisplay() {
         <div className="flex items-center gap-2">
           <button
             onClick={() => setLiveEnabled(prev => !prev)}
-            className="inline-flex items-center gap-1.5 px-2.5 py-1 text-sm rounded transition-colors"
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg border transition-colors font-medium ${
+              isLive
+                ? 'border-green-300 dark:border-green-600 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300'
+                : 'border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400'
+            }`}
             aria-label={isLive ? t('weather.live') : t('weather.paused')}
           >
             {isLive ? (
               <>
                 <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                <span className="text-green-700 dark:text-green-300 font-medium">{t('weather.live')}</span>
+                {t('weather.live')}
               </>
             ) : (
-              <span className="text-gray-500 dark:text-gray-400">{t('weather.paused')}</span>
+              t('weather.paused')
             )}
           </button>
           <DashboardSettings visibility={widgets} onChange={setWidgets} />
@@ -204,6 +220,19 @@ export default function WeatherDisplay() {
       )}
 
       {widgets.weatherMap && location && <WeatherMap lat={location.lat} lon={location.lon} />}
+
+      {/* Inline Weather Comparison */}
+      {location && (
+        <WeatherComparison
+          currentCity={{
+            id: `${location.lat},${location.lon}`,
+            name: cityName,
+            lat: location.lat,
+            lon: location.lon,
+          }}
+          availableCities={getRecentCitiesFromStorage()}
+        />
+      )}
 
       <div className="mt-4 text-center text-sm text-gray-500 dark:text-gray-400">
         <span className="inline-flex items-center px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded">

@@ -311,6 +311,22 @@ export async function mockGraphQL(page: Page) {
       });
     }
 
+    if (operationName === 'GetPodcastFeed') {
+      const feedId = body?.variables?.feedId;
+      const feedIdNum = Number(feedId);
+      // Find the feed in trending or search mocks
+      const feed = mockTrendingPodcasts.feeds.find(f => f.id === feedIdNum) ??
+        mockPodcastSearch.feeds.find(f => f.id === feedIdNum) ??
+        { id: feedIdNum, title: `Podcast ${feedId}`, author: 'Unknown', artwork: null, description: '', categories: '', episodeCount: 0, language: 'en' };
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          data: { podcastFeed: feed },
+        }),
+      });
+    }
+
     if (operationName === 'GetPodcastEpisodes') {
       return route.fulfill({
         status: 200,

@@ -9,40 +9,30 @@ const __dirname = dirname(__filename);
 const sizes = [192, 512];
 const outputDir = join(__dirname, '../packages/shell/public/icons');
 
-// SVG icon content
+// SVG icon content — MyCircle logo (circle + center dot + radiating lines)
 const svgIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
   <defs>
-    <linearGradient id="skyGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" style="stop-color:#3b82f6"/>
       <stop offset="100%" style="stop-color:#1e40af"/>
     </linearGradient>
   </defs>
   <!-- Background -->
-  <rect width="512" height="512" rx="85" fill="url(#skyGradient)"/>
-  <!-- Sun -->
-  <circle cx="346" cy="160" r="75" fill="#fbbf24"/>
-  <g fill="#fbbf24">
-    <rect x="336" y="53" width="21" height="43" rx="10"/>
-    <rect x="336" y="235" width="21" height="43" rx="10"/>
-    <rect x="245" y="149" width="43" height="21" rx="10"/>
-    <rect x="405" y="149" width="43" height="21" rx="10"/>
-    <rect x="267" y="80" width="21" height="43" rx="10" transform="rotate(45 277 101)"/>
-    <rect x="405" y="80" width="21" height="43" rx="10" transform="rotate(-45 415 101)"/>
-    <rect x="267" y="208" width="21" height="43" rx="10" transform="rotate(-45 277 229)"/>
-    <rect x="405" y="208" width="21" height="43" rx="10" transform="rotate(45 415 229)"/>
-  </g>
-  <!-- Cloud -->
-  <ellipse cx="187" cy="267" rx="93" ry="67" fill="white"/>
-  <ellipse cx="267" cy="280" rx="80" ry="59" fill="white"/>
-  <ellipse cx="147" cy="293" rx="67" ry="48" fill="white"/>
-  <ellipse cx="307" cy="299" rx="59" ry="43" fill="white"/>
-  <!-- Rain drops -->
-  <g fill="#60a5fa">
-    <ellipse cx="133" cy="387" rx="11" ry="21"/>
-    <ellipse cx="187" cy="413" rx="11" ry="21"/>
-    <ellipse cx="240" cy="395" rx="11" ry="21"/>
-    <ellipse cx="293" cy="421" rx="11" ry="21"/>
-    <ellipse cx="347" cy="400" rx="11" ry="21"/>
+  <rect width="512" height="512" rx="108" fill="url(#bgGradient)"/>
+  <!-- Outer circle -->
+  <circle cx="256" cy="256" r="138" fill="none" stroke="white" stroke-width="14"/>
+  <!-- Inner dot -->
+  <circle cx="256" cy="256" r="44" fill="white"/>
+  <!-- Radiating lines -->
+  <g stroke="white" stroke-width="12" stroke-linecap="round">
+    <line x1="256" y1="64" x2="256" y2="106"/>
+    <line x1="256" y1="406" x2="256" y2="448"/>
+    <line x1="64" y1="256" x2="106" y2="256"/>
+    <line x1="406" y1="256" x2="448" y2="256"/>
+    <line x1="120" y1="120" x2="151" y2="151"/>
+    <line x1="361" y1="361" x2="392" y2="392"/>
+    <line x1="120" y1="392" x2="151" y2="361"/>
+    <line x1="361" y1="151" x2="392" y2="120"/>
   </g>
 </svg>`;
 

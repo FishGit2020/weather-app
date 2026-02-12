@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MockedProvider } from '@apollo/client/testing/react';
 import { MemoryRouter } from 'react-router';
 import PodcastPlayer from './PodcastPlayer';
@@ -70,7 +71,7 @@ describe('PodcastPlayer', () => {
 
   it('renders trending section header', () => {
     renderWithProviders(<PodcastPlayer />);
-    expect(screen.getByText('Trending')).toBeInTheDocument();
+    expect(screen.getAllByText('Trending').length).toBeGreaterThan(0);
   });
 
   it('renders trending podcast cards', () => {
@@ -89,5 +90,35 @@ describe('PodcastPlayer', () => {
     renderWithProviders(<PodcastPlayer />);
     const subscribeButtons = screen.getAllByText('Subscribe');
     expect(subscribeButtons.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('renders discover and subscribed tabs', () => {
+    renderWithProviders(<PodcastPlayer />);
+    // Tab bar with "Trending" (discover) and "My Subscriptions" tabs
+    const trendingTabs = screen.getAllByText('Trending');
+    expect(trendingTabs.length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText('My Subscriptions')).toBeInTheDocument();
+  });
+
+  it('switches to subscribed tab and shows empty state', async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<PodcastPlayer />);
+
+    const subscribedTab = screen.getByText('My Subscriptions');
+    await user.click(subscribedTab);
+
+    expect(screen.getByText('No subscriptions yet.')).toBeInTheDocument();
+  });
+
+  it('uses string IDs for subscription management', async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<PodcastPlayer />);
+
+    // Subscribe to a podcast
+    const subscribeButtons = screen.getAllByText('Subscribe');
+    await user.click(subscribeButtons[0]);
+
+    // The button should change to Unsubscribe
+    expect(screen.getAllByText('Unsubscribe').length).toBeGreaterThanOrEqual(1);
   });
 });

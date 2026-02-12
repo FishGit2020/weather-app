@@ -7,9 +7,9 @@ importScripts('https://www.gstatic.com/firebasejs/11.9.0/firebase-messaging-comp
 // These values are public (same as in the client bundle)
 firebase.initializeApp({
   apiKey: 'AIzaSyDeUSQG1CKbAC-_8iGKF4nETF9p-JWPQps',
-  authDomain: 'weather-app-d4f7e.firebaseapp.com',
-  projectId: 'weather-app-d4f7e',
-  storageBucket: 'weather-app-d4f7e.firebasestorage.app',
+  authDomain: 'mycircle-dash.firebaseapp.com',
+  projectId: 'mycircle-dash',
+  storageBucket: 'mycircle-dash.firebasestorage.app',
   messagingSenderId: '84705111364',
   appId: '1:84705111364:web:eebe49a0481f3642f13b11',
 });

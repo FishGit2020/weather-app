@@ -5,10 +5,8 @@ import { toPng } from 'html-to-image';
 import Layout from './components/Layout';
 import Loading from './components/Loading';
 import ErrorBoundary from './components/ErrorBoundary';
-import UseMyLocation from './components/UseMyLocation';
-import CitySearchWrapper from './components/CitySearchWrapper';
-import FavoriteCities from './components/FavoriteCities';
 import WeatherCompare from './components/WeatherCompare';
+import DashboardPage from './pages/DashboardPage';
 import { useAuth } from './context/AuthContext';
 
 // Lazy load remote micro frontends
@@ -23,29 +21,6 @@ const WeatherDisplayFallback = () => (
     <p className="text-yellow-700 dark:text-yellow-300">Weather Display module is loading...</p>
   </div>
 );
-
-// Home page combining micro frontends
-function HomePage() {
-  const { t } = useTranslation();
-  return (
-    <div className="space-y-8">
-      <section className="text-center mb-8">
-        <h2 className="text-3xl font-bold text-gray-800 dark:text-white mb-4">
-          {t('home.title')}
-        </h2>
-        <p className="text-gray-600 dark:text-gray-300 max-w-2xl mx-auto mb-6">
-          {t('home.subtitle')}
-        </p>
-        <UseMyLocation />
-        <div className="mt-4 text-gray-400 dark:text-gray-500 text-sm">{t('home.orSearchBelow')}</div>
-      </section>
-
-      <CitySearchWrapper />
-
-      <FavoriteCities />
-    </div>
-  );
-}
 
 // Favorite star button for weather page
 function FavoriteButton() {
@@ -267,7 +242,7 @@ export default function App() {
   return (
     <Routes>
       <Route path="/" element={<Layout />}>
-        <Route index element={<HomePage />} />
+        <Route index element={<DashboardPage />} />
         <Route path="weather/:coords" element={<WeatherPage />} />
         <Route path="stocks" element={<StocksPage />} />
         <Route path="podcasts" element={<PodcastsPage />} />

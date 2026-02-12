@@ -30,7 +30,7 @@ export default defineConfig({
       name: 'deployed',
       use: {
         ...devices['Desktop Chrome'],
-        baseURL: 'https://weather-app-d4f7e.web.app',
+        baseURL: 'https://mycircle-dash.web.app',
       },
     },
   ],

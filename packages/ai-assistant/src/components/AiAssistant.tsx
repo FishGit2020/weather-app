@@ -42,7 +42,7 @@ export default function AiAssistant() {
 
       {/* Messages area */}
       <div
-        className="flex-1 overflow-y-auto space-y-4 mb-4 min-h-0"
+        className={`flex-1 space-y-4 mb-4 min-h-0 ${messages.length > 0 || loading ? 'overflow-y-auto' : 'overflow-hidden'}`}
         role="list"
         aria-label={t('ai.chatMessages')}
         aria-live="polite"

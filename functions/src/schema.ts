@@ -105,7 +105,7 @@ export const typeDefs = `#graphql
   # ─── Podcast Types ─────────────────────────────────────────────
 
   type PodcastFeed {
-    id: Int!
+    id: ID!
     title: String!
     author: String
     artwork: String
@@ -116,14 +116,14 @@ export const typeDefs = `#graphql
   }
 
   type PodcastEpisode {
-    id: Int!
+    id: ID!
     title: String!
     description: String
     datePublished: Int
     duration: Int
     enclosureUrl: String
     image: String
-    feedId: Int
+    feedId: ID
   }
 
   type PodcastSearchResponse {
@@ -157,7 +157,8 @@ export const typeDefs = `#graphql
     # Podcast queries
     searchPodcasts(query: String!): PodcastSearchResponse!
     trendingPodcasts: PodcastTrendingResponse!
-    podcastEpisodes(feedId: Int!): PodcastEpisodesResponse!
+    podcastEpisodes(feedId: ID!): PodcastEpisodesResponse!
+    podcastFeed(feedId: ID!): PodcastFeed
   }
 
   schema {

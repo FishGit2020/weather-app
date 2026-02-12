@@ -13,10 +13,17 @@ test.describe('Podcast Player', () => {
     await expect(page.getByPlaceholder(/search podcasts/i)).toBeVisible({ timeout: 15_000 });
   });
 
+  test('shows discover and subscribed tabs', async ({ page }) => {
+    await expect(page.getByRole('heading', { level: 1, name: /podcasts/i })).toBeVisible({ timeout: 15_000 });
+
+    // Tab bar should have Trending (discover) and My Subscriptions tabs
+    await expect(page.getByRole('button', { name: 'Trending', exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: /My Subscriptions/i })).toBeVisible();
+  });
+
   test('shows trending section with podcast cards', async ({ page }) => {
     await expect(page.getByRole('heading', { level: 2, name: 'Trending' })).toBeVisible({ timeout: 15_000 });
 
-    // Should show trending podcast cards from mock data (use exact to avoid matching "Trending Show 10")
     await expect(page.getByRole('heading', { name: 'Trending Show 1', exact: true })).toBeVisible({ timeout: 10_000 });
     await expect(page.getByText('Host 1').first()).toBeVisible();
   });
@@ -30,7 +37,6 @@ test.describe('Podcast Player', () => {
   test('trending cards have subscribe buttons', async ({ page }) => {
     await expect(page.getByRole('heading', { name: 'Trending Show 1', exact: true })).toBeVisible({ timeout: 15_000 });
 
-    // Each card should have a subscribe button
     const subscribeButtons = page.getByRole('button', { name: /^Subscribe /i });
     await expect(subscribeButtons.first()).toBeVisible();
   });
@@ -40,17 +46,14 @@ test.describe('Podcast Player', () => {
     await expect(searchInput).toBeVisible({ timeout: 15_000 });
     await searchInput.fill('Tech');
 
-    // Wait for mock search results
     await expect(page.getByText('Tech Talk Daily').first()).toBeVisible({ timeout: 10_000 });
   });
 
   test('clicking a trending podcast shows episodes', async ({ page }) => {
-    // Wait for trending to load and click first card
     const firstCard = page.getByRole('button', { name: /^Trending Show 1 /i });
     await expect(firstCard).toBeVisible({ timeout: 15_000 });
     await firstCard.click();
 
-    // Should show episodes section
     await expect(page.getByRole('heading', { name: /episodes/i })).toBeVisible({ timeout: 10_000 });
   });
 
@@ -59,7 +62,6 @@ test.describe('Podcast Player', () => {
     await expect(firstCard).toBeVisible({ timeout: 15_000 });
     await firstCard.click();
 
-    // Should show episodes from mock data
     await expect(page.getByText(/Episode 1: Great Content/)).toBeVisible({ timeout: 10_000 });
   });
 
@@ -68,11 +70,32 @@ test.describe('Podcast Player', () => {
     await expect(firstCard).toBeVisible({ timeout: 15_000 });
     await firstCard.click();
 
-    // Wait for episodes to load, then click the back link (it's the link/button with just "Trending" text)
     await expect(page.getByRole('heading', { name: /episodes/i })).toBeVisible({ timeout: 10_000 });
     await page.getByRole('button', { name: 'Trending', exact: true }).click();
 
-    // Should see trending section again
     await expect(page.getByRole('heading', { level: 2, name: 'Trending' })).toBeVisible({ timeout: 10_000 });
+  });
+
+  test('switching to subscribed tab shows empty state', async ({ page }) => {
+    await expect(page.getByRole('heading', { level: 1, name: /podcasts/i })).toBeVisible({ timeout: 15_000 });
+
+    await page.getByRole('button', { name: /My Subscriptions/i }).click();
+
+    await expect(page.getByText(/No subscriptions yet/i)).toBeVisible({ timeout: 5_000 });
+  });
+
+  test('subscribe to podcast then check subscribed tab', async ({ page }) => {
+    await expect(page.getByRole('heading', { name: 'Trending Show 1', exact: true })).toBeVisible({ timeout: 15_000 });
+
+    // Click subscribe on first podcast
+    const subscribeButtons = page.getByRole('button', { name: /^Subscribe /i });
+    await subscribeButtons.first().click();
+
+    // Switch to subscribed tab — should show a badge count
+    const subscribedTab = page.getByRole('button', { name: /My Subscriptions/i });
+    await subscribedTab.click();
+
+    // Should no longer show empty state
+    await expect(page.getByText(/No subscriptions yet/i)).not.toBeVisible({ timeout: 5_000 });
   });
 });

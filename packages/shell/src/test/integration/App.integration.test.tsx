@@ -96,11 +96,11 @@ describe('App Integration', () => {
   });
 
   describe('Navigation', () => {
-    it('has working weather link in header', () => {
+    it('has working home link in header', () => {
       renderApp('/weather/51.5074,-0.1278');
 
-      const weatherLinks = screen.getAllByText('Weather');
-      expect(weatherLinks.length).toBeGreaterThan(0);
+      const homeLinks = screen.getAllByText('Home');
+      expect(homeLinks.length).toBeGreaterThan(0);
     });
 
     it('has working logo link to home', () => {

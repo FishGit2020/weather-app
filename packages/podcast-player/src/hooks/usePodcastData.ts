@@ -9,7 +9,7 @@ import {
 // --- Types ---
 
 export interface Podcast {
-  id: number;
+  id: string | number;
   title: string;
   author: string;
   artwork: string;
@@ -20,7 +20,7 @@ export interface Podcast {
 }
 
 export interface Episode {
-  id: number;
+  id: string | number;
   title: string;
   description: string;
   datePublished: number;
@@ -28,7 +28,7 @@ export interface Episode {
   enclosureUrl: string;
   enclosureType: string;
   image: string;
-  feedId: number;
+  feedId: string | number;
 }
 
 export interface PodcastSearchResult {
@@ -127,7 +127,7 @@ export function useTrendingPodcasts() {
 
 // --- Hook: usePodcastEpisodes ---
 
-export function usePodcastEpisodes(feedId: number | null) {
+export function usePodcastEpisodes(feedId: string | number | null) {
   const { data, loading, error } = useQuery<PodcastEpisodesResponse>(GET_PODCAST_EPISODES, {
     variables: { feedId: feedId! },
     skip: feedId === null,

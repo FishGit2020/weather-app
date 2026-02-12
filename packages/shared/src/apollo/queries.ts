@@ -238,7 +238,7 @@ export const GET_TRENDING_PODCASTS = gql`
 `;
 
 export const GET_PODCAST_EPISODES = gql`
-  query GetPodcastEpisodes($feedId: Int!) {
+  query GetPodcastEpisodes($feedId: ID!) {
     podcastEpisodes(feedId: $feedId) {
       items {
         id
@@ -251,6 +251,21 @@ export const GET_PODCAST_EPISODES = gql`
         feedId
       }
       count
+    }
+  }
+`;
+
+export const GET_PODCAST_FEED = gql`
+  query GetPodcastFeed($feedId: ID!) {
+    podcastFeed(feedId: $feedId) {
+      id
+      title
+      author
+      artwork
+      description
+      categories
+      episodeCount
+      language
     }
   }
 `;

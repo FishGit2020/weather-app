@@ -293,7 +293,26 @@ async function getTrendingPodcastsAPI(apiKey: string, apiSecret: string) {
   return result;
 }
 
-async function getPodcastEpisodesAPI(apiKey: string, apiSecret: string, feedId: number) {
+async function getPodcastFeedAPI(apiKey: string, apiSecret: string, feedId: string | number) {
+  const cacheKey = `podcast:feed:${feedId}`;
+  const cached = podcastCache.get<any>(cacheKey);
+  if (cached) return cached;
+
+  const headers = getPodcastIndexHeaders(apiKey, apiSecret);
+  const response = await axios.get(`https://api.podcastindex.org/api/1.0/podcasts/byfeedid`, {
+    params: { id: feedId },
+    headers,
+    timeout: 10000,
+  });
+  const feed = response.data?.feed;
+  if (feed && feed.categories && typeof feed.categories === 'object') {
+    feed.categories = Object.values(feed.categories).join(', ');
+  }
+  podcastCache.set(cacheKey, feed, 600);
+  return feed ?? null;
+}
+
+async function getPodcastEpisodesAPI(apiKey: string, apiSecret: string, feedId: string | number) {
   const cacheKey = `podcast:episodes:${feedId}`;
   const cached = podcastCache.get<any>(cacheKey);
   if (cached) return cached;
@@ -423,10 +442,16 @@ export function createResolvers(getApiKey: () => string, getFinnhubKey?: () => s
         return await getTrendingPodcastsAPI(keys.apiKey, keys.apiSecret);
       },
 
-      podcastEpisodes: async (_: any, { feedId }: { feedId: number }) => {
+      podcastEpisodes: async (_: any, { feedId }: { feedId: string }) => {
         const keys = getPodcastKeys?.();
         if (!keys?.apiKey || !keys?.apiSecret) throw new Error('PodcastIndex API credentials not configured');
         return await getPodcastEpisodesAPI(keys.apiKey, keys.apiSecret, feedId);
+      },
+
+      podcastFeed: async (_: any, { feedId }: { feedId: string }) => {
+        const keys = getPodcastKeys?.();
+        if (!keys?.apiKey || !keys?.apiSecret) throw new Error('PodcastIndex API credentials not configured');
+        return await getPodcastFeedAPI(keys.apiKey, keys.apiSecret, feedId);
       },
     }
   };

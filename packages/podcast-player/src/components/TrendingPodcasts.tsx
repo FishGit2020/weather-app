@@ -6,7 +6,7 @@ import PodcastCard from './PodcastCard';
 
 interface TrendingPodcastsProps {
   onSelectPodcast: (podcast: Podcast) => void;
-  subscribedIds: Set<number>;
+  subscribedIds: Set<string>;
   onToggleSubscribe: (podcast: Podcast) => void;
 }
 
@@ -82,7 +82,7 @@ export default function TrendingPodcasts({
             key={podcast.id}
             podcast={podcast}
             onSelect={onSelectPodcast}
-            isSubscribed={subscribedIds.has(podcast.id)}
+            isSubscribed={subscribedIds.has(String(podcast.id))}
             onToggleSubscribe={onToggleSubscribe}
           />
         ))}

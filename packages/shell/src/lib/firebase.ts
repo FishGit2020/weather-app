@@ -35,13 +35,17 @@ if (firebaseEnabled) {
   googleProvider = new GoogleAuthProvider();
 
   // App Check: verify requests come from our app, not bots/curl
-  if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
-    (self as any).FIREBASE_APPCHECK_DEBUG_TOKEN = true;
+  try {
+    if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+      (self as any).FIREBASE_APPCHECK_DEBUG_TOKEN = true;
+    }
+    appCheck = initializeAppCheck(app, {
+      provider: new ReCaptchaEnterpriseProvider('6Lcvm2ksAAAAAPQ63bPl94XAfS2gTn2Fu4zMmT4f'),
+      isTokenAutoRefreshEnabled: true,
+    });
+  } catch (err) {
+    console.warn('App Check initialization failed:', err);
   }
-  appCheck = initializeAppCheck(app, {
-    provider: new ReCaptchaEnterpriseProvider('6Lcvm2ksAAAAAPQ63bPl94XAfS2gTn2Fu4zMmT4f'),
-    isTokenAutoRefreshEnabled: true,
-  });
 
   // Expose ID token getter for MFEs that can't import from shell directly
   window.__getFirebaseIdToken = async () => {

@@ -47,13 +47,13 @@ describe('Layout', () => {
     expect(screen.getByText('MyCircle')).toBeInTheDocument();
   });
 
-  it('renders navigation links for Weather, Stocks, Podcasts, Compare', () => {
+  it('renders navigation links for Home, Stocks, Podcasts, AI', () => {
     renderWithRouter(<Layout />);
 
-    expect(screen.getAllByText('Weather').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Home').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Stocks').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Podcasts').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Compare').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('AI').length).toBeGreaterThan(0);
   });
 
   it('renders footer with OpenWeatherMap attribution', () => {

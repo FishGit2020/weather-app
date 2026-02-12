@@ -6,7 +6,7 @@ interface EpisodeListProps {
   episodes: Episode[];
   loading: boolean;
   error: string | null;
-  currentEpisodeId: number | null;
+  currentEpisodeId: string | number | null;
   isPlaying: boolean;
   onPlayEpisode: (episode: Episode) => void;
 }

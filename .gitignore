@@ -25,6 +25,9 @@ dist-ssr
 *.sln
 *.sw?
 
+# Windows reserved-name artifacts
+nul
+
 # VitePWA dev artifacts
 **/dev-dist/
 
@@ -42,3 +45,4 @@ firestore-debug.log
 ui-debug.log
 .runtimeconfig.json
 functions/lib/
+auth-users.json

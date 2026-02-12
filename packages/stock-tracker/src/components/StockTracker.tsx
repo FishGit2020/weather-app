@@ -159,16 +159,20 @@ export default function StockTracker() {
               <div className="flex items-center gap-2 text-sm mb-4">
                 <button
                   onClick={() => setLiveEnabled(prev => !prev)}
-                  className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded transition-colors"
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg border transition-colors font-medium ${
+                    isLive
+                      ? 'border-green-300 dark:border-green-600 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300'
+                      : 'border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400'
+                  }`}
                   aria-label={isLive ? t('stocks.live') : t('stocks.paused')}
                 >
                   {isLive ? (
                     <>
                       <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                      <span className="text-green-700 dark:text-green-300 font-medium">{t('stocks.live')}</span>
+                      {t('stocks.live')}
                     </>
                   ) : (
-                    <span className="text-gray-500 dark:text-gray-400">{t('stocks.paused')}</span>
+                    t('stocks.paused')
                   )}
                 </button>
                 {isLive && lastUpdated && (

@@ -136,4 +136,46 @@ describe('StockTracker', () => {
     // Live defaults to false, so no LIVE indicator should be shown
     expect(screen.queryByText('LIVE')).not.toBeInTheDocument();
   });
+
+  it('live toggle has visible border and background styling', async () => {
+    const mockTimestamp = Math.floor(Date.now() / 1000);
+    const mocks = [
+      {
+        request: {
+          query: GET_STOCK_QUOTE,
+          variables: { symbol: 'AAPL' },
+        },
+        result: {
+          data: {
+            stockQuote: {
+              c: 150.25, d: 2.5, dp: 1.69, h: 152.0,
+              l: 148.0, o: 149.0, pc: 147.75, t: mockTimestamp,
+            },
+          },
+        },
+      },
+    ];
+
+    localStorageMock.getItem.mockImplementation((key: string) => {
+      if (key === 'stock-tracker-watchlist') return JSON.stringify([{ symbol: 'AAPL', companyName: 'Apple Inc.' }]);
+      if (key === 'stock-live-enabled') return 'true';
+      return null;
+    });
+
+    render(
+      <MockedProvider mocks={mocks} addTypename={false}>
+        <StockTracker />
+      </MockedProvider>
+    );
+
+    const appleCard = await screen.findByText('AAPL');
+    await act(async () => {
+      await userEvent.click(appleCard);
+    });
+
+    const liveButton = await screen.findByText('LIVE');
+    const button = liveButton.closest('button');
+    expect(button?.className).toContain('border');
+    expect(button?.className).toContain('rounded-lg');
+  });
 });
