@@ -1,4 +1,4 @@
-const RECAPTCHA_SITE_KEY = '6LfGLWgsAAAAAENilq2grmb2oJOwWTtgJp6Zk8-6';
+const RECAPTCHA_SITE_KEY = '6Lcvm2ksAAAAAPQ63bPl94XAfS2gTn2Fu4zMmT4f';
 const LOAD_TIMEOUT_MS = 5000;
 
 declare global {

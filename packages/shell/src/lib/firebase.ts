@@ -38,7 +38,7 @@ if (firebaseEnabled) {
     (self as any).FIREBASE_APPCHECK_DEBUG_TOKEN = true;
   }
   initializeAppCheck(app, {
-    provider: new ReCaptchaEnterpriseProvider('6LfGLq2grmb2oJOwWTtgJp6Zk8-6'),
+    provider: new ReCaptchaEnterpriseProvider('6Lcvm2ksAAAAAPQ63bPl94XAfS2gTn2Fu4zMmT4f'),
     isTokenAutoRefreshEnabled: true,
   });
 
