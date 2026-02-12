@@ -1,6 +1,7 @@
 import { onRequest, onCall, HttpsError } from 'firebase-functions/v2/https';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { initializeApp, getApps } from 'firebase-admin/app';
+import { getAuth } from 'firebase-admin/auth';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { getMessaging } from 'firebase-admin/messaging';
 import type { Request, Response } from 'express';
@@ -13,6 +14,18 @@ import type { FunctionDeclaration } from '@google/genai';
 // Initialize Firebase Admin (idempotent)
 if (getApps().length === 0) {
   initializeApp();
+}
+
+/** Verify Firebase Auth ID token from Authorization header. Returns uid or null. */
+async function verifyAuthToken(req: Request): Promise<string | null> {
+  const authHeader = req.headers.authorization;
+  if (!authHeader?.startsWith('Bearer ')) return null;
+  try {
+    const decoded = await getAuth().verifyIdToken(authHeader.substring(7));
+    return decoded.uid;
+  } catch {
+    return null;
+  }
 }
 
 // Cache the Apollo Server instance to avoid re-initialization on every request
@@ -81,6 +94,18 @@ export const graphql = onRequest(
       }
     }
 
+    // Require auth for stock/podcast queries (expensive third-party APIs)
+    const opName = (req.body.operationName || '').toLowerCase();
+    if (opName.includes('stock') || opName.includes('podcast')) {
+      const uid = await verifyAuthToken(req);
+      if (!uid) {
+        res.status(401).json({
+          errors: [{ message: 'Authentication required for stock and podcast data', extensions: { code: 'UNAUTHENTICATED' } }]
+        });
+        return;
+      }
+    }
+
     // Handle the GraphQL request directly without Express
     // Firebase already parses the body, so we use it directly
     const { body, headers } = req;
@@ -128,7 +153,7 @@ export const graphql = onRequest(
  * Callable function: subscribe an FCM token to weather alerts for given cities.
  */
 export const subscribeToAlerts = onCall(
-  { maxInstances: 5 },
+  { maxInstances: 5, enforceAppCheck: true },
   async (request) => {
     const { token, cities } = request.data as {
       token: string;
@@ -138,16 +163,23 @@ export const subscribeToAlerts = onCall(
     if (!token || typeof token !== 'string') {
       throw new HttpsError('invalid-argument', 'FCM token is required');
     }
-    if (!cities || !Array.isArray(cities) || cities.length === 0) {
-      throw new HttpsError('invalid-argument', 'At least one city is required');
+    if (!Array.isArray(cities)) {
+      throw new HttpsError('invalid-argument', 'cities must be an array');
     }
 
     const db = getFirestore();
     const subsRef = db.collection('alertSubscriptions');
-
-    // Upsert: find existing doc by token or create new
     const existing = await subsRef.where('token', '==', token).limit(1).get();
 
+    // Empty cities array = unsubscribe (delete the doc)
+    if (cities.length === 0) {
+      if (!existing.empty) {
+        await existing.docs[0].ref.delete();
+      }
+      return { success: true, subscribed: false };
+    }
+
+    // Upsert: update existing or create new subscription
     if (!existing.empty) {
       await existing.docs[0].ref.update({
         cities,
@@ -162,7 +194,7 @@ export const subscribeToAlerts = onCall(
       });
     }
 
-    return { success: true };
+    return { success: true, subscribed: true };
   }
 );
 
@@ -320,6 +352,13 @@ export const stockProxy = onRequest(
       return;
     }
 
+    // Require auth — stock proxy uses Finnhub quota
+    const stockUid = await verifyAuthToken(req);
+    if (!stockUid) {
+      res.status(401).json({ error: 'Authentication required' });
+      return;
+    }
+
     const path = req.path.replace(/^\/stock\//, '');
     const baseUrl = 'https://finnhub.io/api/v1';
     let url: string;
@@ -437,6 +476,13 @@ export const aiChat = onRequest(
   async (req: Request, res: Response) => {
     if (req.method !== 'POST') {
       res.status(405).json({ error: 'Method not allowed' });
+      return;
+    }
+
+    // Require auth — AI chat uses Gemini quota
+    const aiUid = await verifyAuthToken(req);
+    if (!aiUid) {
+      res.status(401).json({ error: 'Authentication required' });
       return;
     }
 
@@ -728,6 +774,13 @@ export const podcastProxy = onRequest(
       return;
     }
 
+    // Require auth — podcast proxy uses PodcastIndex quota
+    const podcastUid = await verifyAuthToken(req);
+    if (!podcastUid) {
+      res.status(401).json({ error: 'Authentication required' });
+      return;
+    }
+
     const path = req.path.replace(/^\/podcast\//, '');
     const baseUrl = 'https://api.podcastindex.org/api/1.0';
     let url: string;
@@ -772,8 +825,18 @@ export const podcastProxy = onRequest(
     try {
       const headers = getPodcastIndexHeaders(apiKey, apiSecret);
       const response = await axios.get(url, { headers, timeout: 10000 });
-      podcastCache.set(cacheKey, response.data, cacheTTL);
-      res.status(200).json(response.data);
+      // Normalize categories from object to string (PodcastIndex returns { 55: "News" })
+      const data = response.data;
+      if (data?.feeds) {
+        data.feeds = data.feeds.map((feed: any) => ({
+          ...feed,
+          categories: feed.categories && typeof feed.categories === 'object'
+            ? Object.values(feed.categories).join(', ')
+            : feed.categories ?? null,
+        }));
+      }
+      podcastCache.set(cacheKey, data, cacheTTL);
+      res.status(200).json(data);
     } catch (err: any) {
       console.error(`Podcast proxy error (${path}):`, err.message);
       res.status(err.response?.status || 500).json({

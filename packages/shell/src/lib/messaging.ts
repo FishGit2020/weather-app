@@ -79,3 +79,20 @@ export async function subscribeToWeatherAlerts(
     return false;
   }
 }
+
+/**
+ * Unsubscribe from weather alerts by sending an empty cities array.
+ * The Cloud Function deletes the Firestore doc for this token.
+ */
+export async function unsubscribeFromWeatherAlerts(token: string): Promise<boolean> {
+  if (!app) return false;
+  try {
+    const functions = getFunctions(app);
+    const subscribeFn = httpsCallable(functions, 'subscribeToAlerts');
+    await subscribeFn({ token, cities: [] });
+    return true;
+  } catch (err) {
+    console.error('Failed to unsubscribe from weather alerts:', err);
+    return false;
+  }
+}
