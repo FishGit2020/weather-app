@@ -17,12 +17,7 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@': resolve(__dirname, './src'),
-      // Mock remote modules for testing
-      'citySearch/CitySearch': resolve(__dirname, './src/test/mocks/CitySearchMock.tsx'),
-      'weatherDisplay/WeatherDisplay': resolve(__dirname, './src/test/mocks/WeatherDisplayMock.tsx'),
-      'stockTracker/StockTracker': resolve(__dirname, './src/test/mocks/StockTrackerMock.tsx'),
-      'podcastPlayer/PodcastPlayer': resolve(__dirname, './src/test/mocks/PodcastPlayerMock.tsx')
+      '@': resolve(__dirname, './src')
     }
   }
 });

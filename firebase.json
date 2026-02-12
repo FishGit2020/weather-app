@@ -16,6 +16,10 @@
         "function": "stockProxy"
       },
       {
+        "source": "/podcast/**",
+        "function": "podcastProxy"
+      },
+      {
         "source": "/city-search/**",
         "destination": "/city-search/index.html"
       },
@@ -26,6 +30,10 @@
       {
         "source": "/stock-tracker/**",
         "destination": "/stock-tracker/index.html"
+      },
+      {
+        "source": "/podcast-player/**",
+        "destination": "/podcast-player/index.html"
       },
       {
         "source": "**",

@@ -65,6 +65,12 @@ const stockTrackerDest = path.join(firebaseDir, 'stock-tracker');
 console.log(`Copying stock-tracker to ${stockTrackerDest}`);
 copyDir(stockTrackerDist, stockTrackerDest);
 
+// 5. Copy podcast-player MF to /podcast-player
+const podcastPlayerDist = path.join(rootDir, 'packages', 'podcast-player', 'dist');
+const podcastPlayerDest = path.join(firebaseDir, 'podcast-player');
+console.log(`Copying podcast-player to ${podcastPlayerDest}`);
+copyDir(podcastPlayerDist, podcastPlayerDest);
+
 console.log('\nFirebase deployment directory assembled successfully!');
 console.log(`Output: ${firebaseDir}`);
 

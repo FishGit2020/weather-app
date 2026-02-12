@@ -14,6 +14,7 @@ import { useAuth } from './context/AuthContext';
 // Lazy load remote micro frontends
 const WeatherDisplayMF = lazy(() => import('weatherDisplay/WeatherDisplay'));
 const StockTrackerMF = lazy(() => import('stockTracker/StockTracker'));
+const PodcastPlayerMF = lazy(() => import('podcastPlayer/PodcastPlayer'));
 
 // Fallback components for when remote modules fail to load
 const WeatherDisplayFallback = () => (
@@ -216,13 +217,20 @@ function StocksPage() {
   );
 }
 
+// Fallback for podcast player MFE
+const PodcastPlayerFallback = () => (
+  <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+    <p className="text-yellow-700 dark:text-yellow-300">Podcast Player module is loading...</p>
+  </div>
+);
+
 function PodcastsPage() {
-  const { t } = useTranslation();
   return (
-    <div className="text-center py-16">
-      <h2 className="text-3xl font-bold text-gray-800 dark:text-white mb-4">{t('podcasts.title')}</h2>
-      <p className="text-gray-600 dark:text-gray-400">{t('podcasts.loading')}</p>
-    </div>
+    <ErrorBoundary fallback={<PodcastPlayerFallback />}>
+      <Suspense fallback={<Loading />}>
+        <PodcastPlayerMF />
+      </Suspense>
+    </ErrorBoundary>
   );
 }
 

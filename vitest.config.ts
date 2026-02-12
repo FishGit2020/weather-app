@@ -9,6 +9,7 @@ export default defineConfig({
       'citySearch/CitySearch': resolve(__dirname, './packages/shell/src/test/mocks/CitySearchMock.tsx'),
       'weatherDisplay/WeatherDisplay': resolve(__dirname, './packages/shell/src/test/mocks/WeatherDisplayMock.tsx'),
       'stockTracker/StockTracker': resolve(__dirname, './packages/shell/src/test/mocks/StockTrackerMock.tsx'),
+      'podcastPlayer/PodcastPlayer': resolve(__dirname, './packages/shell/src/test/mocks/PodcastPlayerMock.tsx'),
     }
   },
   test: {
