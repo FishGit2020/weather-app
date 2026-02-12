@@ -41,6 +41,8 @@ export interface UserProfile {
   photoURL: string | null;
   darkMode: boolean;
   locale?: string;
+  tempUnit?: 'C' | 'F';
+  speedUnit?: 'ms' | 'mph' | 'kmh';
   recentCities: RecentCity[];
   favoriteCities: FavoriteCity[];
   createdAt: Date;
@@ -145,6 +147,24 @@ export async function updateUserLocale(uid: string, locale: string) {
   const userRef = doc(db, 'users', uid);
   await updateDoc(userRef, {
     locale,
+    updatedAt: serverTimestamp(),
+  });
+}
+
+export async function updateUserTempUnit(uid: string, tempUnit: 'C' | 'F') {
+  if (!db) return;
+  const userRef = doc(db, 'users', uid);
+  await updateDoc(userRef, {
+    tempUnit,
+    updatedAt: serverTimestamp(),
+  });
+}
+
+export async function updateUserSpeedUnit(uid: string, speedUnit: 'ms' | 'mph' | 'kmh') {
+  if (!db) return;
+  const userRef = doc(db, 'users', uid);
+  await updateDoc(userRef, {
+    speedUnit,
     updatedAt: serverTimestamp(),
   });
 }

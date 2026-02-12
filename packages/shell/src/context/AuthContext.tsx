@@ -7,6 +7,8 @@ import {
   getUserProfile,
   updateUserDarkMode,
   updateUserLocale,
+  updateUserTempUnit,
+  updateUserSpeedUnit,
   addRecentCity,
   removeRecentCity,
   getRecentCities,
@@ -27,6 +29,8 @@ interface AuthContextType {
   signOut: () => Promise<void>;
   updateDarkMode: (darkMode: boolean) => Promise<void>;
   updateLocale: (locale: string) => Promise<void>;
+  updateTempUnit: (unit: 'C' | 'F') => Promise<void>;
+  updateSpeedUnit: (unit: 'ms' | 'mph' | 'kmh') => Promise<void>;
   addCity: (city: Omit<RecentCity, 'searchedAt'>) => Promise<void>;
   removeCity: (cityId: string) => Promise<void>;
   toggleFavorite: (city: FavoriteCity) => Promise<boolean>;
@@ -70,6 +74,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (userProfile) {
           setRecentCities(userProfile.recentCities || []);
           setFavoriteCities(userProfile.favoriteCities || []);
+
+          // Restore saved preferences to localStorage so shared hooks pick them up
+          if (userProfile.tempUnit) {
+            localStorage.setItem('tempUnit', userProfile.tempUnit);
+            window.dispatchEvent(new Event('units-changed'));
+          }
+          if (userProfile.speedUnit) {
+            localStorage.setItem('speedUnit', userProfile.speedUnit);
+            window.dispatchEvent(new Event('units-changed'));
+          }
         }
       } else {
         clearUserIdentity();
@@ -118,6 +132,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [user]);
 
+  const updateTempUnit = useCallback(async (tempUnit: 'C' | 'F') => {
+    if (user) {
+      await updateUserTempUnit(user.uid, tempUnit);
+      setProfile((prev) => (prev ? { ...prev, tempUnit } : null));
+    }
+  }, [user]);
+
+  const updateSpeedUnit = useCallback(async (speedUnit: 'ms' | 'mph' | 'kmh') => {
+    if (user) {
+      await updateUserSpeedUnit(user.uid, speedUnit);
+      setProfile((prev) => (prev ? { ...prev, speedUnit } : null));
+    }
+  }, [user]);
+
   const addCity = useCallback(async (city: Omit<RecentCity, 'searchedAt'>) => {
     if (user) {
       await addRecentCity(user.uid, city);
@@ -157,6 +185,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         signOut: signOutUser,
         updateDarkMode,
         updateLocale,
+        updateTempUnit,
+        updateSpeedUnit,
         addCity,
         removeCity,
         toggleFavorite,

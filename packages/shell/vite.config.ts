@@ -158,7 +158,13 @@ export default defineConfig({
   server: {
     port: 3000,
     strictPort: true,
-    cors: true
+    cors: true,
+    proxy: {
+      '/ai/': {
+        target: 'http://localhost:3003',
+        changeOrigin: true,
+      },
+    },
   },
   preview: {
     port: 3000,

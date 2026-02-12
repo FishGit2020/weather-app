@@ -1,7 +1,9 @@
 import React, { useState, useCallback } from 'react';
 import { eventBus, MFEvents } from '@weather/shared';
+import { useAuth } from '../context/AuthContext';
 
 export default function UnitToggle() {
+  const { user, updateTempUnit } = useAuth();
   const [tempUnit, setTempUnit] = useState<'C' | 'F'>(() => {
     try { return (localStorage.getItem('tempUnit') as 'C' | 'F') || 'C'; } catch { return 'C'; }
   });
@@ -14,7 +16,11 @@ export default function UnitToggle() {
     eventBus.publish(MFEvents.THEME_CHANGED, { tempUnit: newUnit });
     // Force re-render across the app
     window.dispatchEvent(new Event('units-changed'));
-  }, [tempUnit]);
+    // Persist to Firestore if signed in
+    if (user) {
+      updateTempUnit(newUnit);
+    }
+  }, [tempUnit, user, updateTempUnit]);
 
   return (
     <button

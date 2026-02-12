@@ -1,5 +1,5 @@
 import React from 'react';
-import { HourlyForecast, useTranslation } from '@weather/shared';
+import { HourlyForecast, useTranslation, useUnits, convertTemp, tempUnitSymbol } from '@weather/shared';
 
 interface Props {
   data: HourlyForecast[];
@@ -7,10 +7,11 @@ interface Props {
 
 export default function HourlyChart({ data }: Props) {
   const { t, locale } = useTranslation();
+  const { tempUnit } = useUnits();
   const hours = data.slice(0, 24);
   if (hours.length < 2) return null;
 
-  const temps = hours.map(h => h.temp);
+  const temps = hours.map(h => convertTemp(h.temp, tempUnit));
   const pops = hours.map(h => h.pop);
   const minTemp = Math.floor(Math.min(...temps) - 2);
   const maxTemp = Math.ceil(Math.max(...temps) + 2);
@@ -26,9 +27,9 @@ export default function HourlyChart({ data }: Props) {
   const getTempY = (temp: number) => padding.top + (1 - (temp - minTemp) / tempRange) * plotHeight;
   const getPopY = (pop: number) => padding.top + plotHeight - pop * plotHeight;
 
-  // Temperature line path
-  const tempPath = hours
-    .map((h, i) => `${i === 0 ? 'M' : 'L'}${getX(i).toFixed(1)},${getTempY(h.temp).toFixed(1)}`)
+  // Temperature line path (using converted temps)
+  const tempPath = temps
+    .map((temp, i) => `${i === 0 ? 'M' : 'L'}${getX(i).toFixed(1)},${getTempY(temp).toFixed(1)}`)
     .join(' ');
 
   // Temperature area fill
@@ -76,20 +77,21 @@ export default function HourlyChart({ data }: Props) {
           {/* Data points + labels */}
           {hours.map((h, i) => {
             const showLabel = i % Math.max(1, Math.floor(hours.length / 8)) === 0;
+            const displayTemp = temps[i];
             return (
               <g key={i}>
-                <circle cx={getX(i)} cy={getTempY(h.temp)} r={showLabel ? 3.5 : 2} className="fill-blue-500" />
+                <circle cx={getX(i)} cy={getTempY(displayTemp)} r={showLabel ? 3.5 : 2} className="fill-blue-500" />
                 {showLabel && (
                   <>
                     <text
                       x={getX(i)}
-                      y={getTempY(h.temp) - 8}
+                      y={getTempY(displayTemp) - 8}
                       textAnchor="middle"
                       className="fill-gray-700 dark:fill-gray-300"
                       fontSize={10}
                       fontWeight="bold"
                     >
-                      {Math.round(h.temp)}°
+                      {displayTemp}°
                     </text>
                     <text
                       x={getX(i)}

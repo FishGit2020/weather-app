@@ -79,38 +79,95 @@ export const typeDefs = `#graphql
     timestamp: String!
   }
 
+  # ─── Stock Types ──────────────────────────────────────────────
+
+  type StockSearchResult {
+    description: String!
+    displaySymbol: String!
+    symbol: String!
+    type: String!
+  }
+
+  type StockQuote {
+    c: Float!
+    d: Float!
+    dp: Float!
+    h: Float!
+    l: Float!
+    o: Float!
+    pc: Float!
+    t: Int!
+  }
+
+  type StockCandle {
+    c: [Float!]!
+    h: [Float!]!
+    l: [Float!]!
+    o: [Float!]!
+    t: [Int!]!
+    v: [Int!]!
+    s: String!
+  }
+
+  # ─── Podcast Types ─────────────────────────────────────────────
+
+  type PodcastFeed {
+    id: Int!
+    title: String!
+    author: String
+    artwork: String
+    description: String
+    categories: String
+    episodeCount: Int
+    language: String
+  }
+
+  type PodcastEpisode {
+    id: Int!
+    title: String!
+    description: String
+    datePublished: Int
+    duration: Int
+    enclosureUrl: String
+    image: String
+    feedId: Int
+  }
+
+  type PodcastSearchResponse {
+    feeds: [PodcastFeed!]!
+    count: Int!
+  }
+
+  type PodcastTrendingResponse {
+    feeds: [PodcastFeed!]!
+    count: Int!
+  }
+
+  type PodcastEpisodesResponse {
+    items: [PodcastEpisode!]!
+    count: Int!
+  }
+
   type Query {
-    """
-    Get comprehensive weather data for a location
-    """
     weather(lat: Float!, lon: Float!): WeatherData!
-
-    """
-    Get current weather only
-    """
     currentWeather(lat: Float!, lon: Float!): CurrentWeather!
-
-    """
-    Get 7-day forecast
-    """
     forecast(lat: Float!, lon: Float!): [ForecastDay!]!
-
-    """
-    Get hourly forecast (48 hours)
-    """
     hourlyForecast(lat: Float!, lon: Float!): [HourlyForecast!]!
-
-    """
-    Search for cities by name
-    """
     searchCities(query: String!, limit: Int = 5): [City!]!
+    reverseGeocode(lat: Float!, lon: Float!): City
+
+    # Stock queries
+    searchStocks(query: String!): [StockSearchResult!]!
+    stockQuote(symbol: String!): StockQuote
+    stockCandles(symbol: String!, resolution: String = "D", from: Int!, to: Int!): StockCandle
+
+    # Podcast queries
+    searchPodcasts(query: String!): PodcastSearchResponse!
+    trendingPodcasts: PodcastTrendingResponse!
+    podcastEpisodes(feedId: Int!): PodcastEpisodesResponse!
   }
 
   type Subscription {
-    """
-    Subscribe to real-time weather updates for a location
-    Updates every 10 minutes
-    """
     weatherUpdates(lat: Float!, lon: Float!): WeatherUpdate!
   }
 
