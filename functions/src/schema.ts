@@ -108,7 +108,7 @@ export const typeDefs = `#graphql
     id: Int!
     title: String!
     author: String
-    image: String
+    artwork: String
     description: String
     categories: String
     episodeCount: Int

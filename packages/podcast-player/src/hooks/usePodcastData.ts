@@ -1,4 +1,12 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import {
+  useQuery,
+  SEARCH_PODCASTS,
+  GET_TRENDING_PODCASTS,
+  GET_PODCAST_EPISODES,
+} from '@weather/shared';
+
+// --- Types ---
 
 export interface Podcast {
   id: number;
@@ -28,154 +36,107 @@ export interface PodcastSearchResult {
   count: number;
 }
 
+// --- GraphQL Response Types ---
+
+interface SearchPodcastsResponse {
+  searchPodcasts: {
+    feeds: Podcast[];
+    count: number;
+  };
+}
+
+interface TrendingPodcastsResponse {
+  trendingPodcasts: {
+    feeds: Podcast[];
+    count: number;
+  };
+}
+
+interface PodcastEpisodesResponse {
+  podcastEpisodes: {
+    items: Episode[];
+    count: number;
+  };
+}
+
+// --- Hook: usePodcastSearch ---
+
 interface FetchState<T> {
   data: T | null;
   loading: boolean;
   error: string | null;
 }
 
-async function fetchJson<T>(url: string): Promise<T> {
-  const response = await fetch(url);
-  if (!response.ok) {
-    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-  }
-  return response.json();
-}
-
-export function usePodcastSearch(query: string) {
-  const [state, setState] = useState<FetchState<PodcastSearchResult>>({
-    data: null,
-    loading: false,
-    error: null,
-  });
+export function usePodcastSearch(query: string): FetchState<PodcastSearchResult> {
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const abortControllerRef = useRef<AbortController | null>(null);
+  const [debouncedQuery, setDebouncedQuery] = useState('');
 
   useEffect(() => {
     if (query.length < 2) {
-      setState({ data: null, loading: false, error: null });
+      setDebouncedQuery('');
       return;
     }
-
-    setState(prev => ({ ...prev, loading: true, error: null }));
 
     if (debounceTimer.current) {
       clearTimeout(debounceTimer.current);
     }
 
-    debounceTimer.current = setTimeout(async () => {
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
-      const controller = new AbortController();
-      abortControllerRef.current = controller;
-
-      try {
-        const response = await fetch(
-          `/podcast/search?q=${encodeURIComponent(query)}`,
-          { signal: controller.signal }
-        );
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-        const data: PodcastSearchResult = await response.json();
-        if (!controller.signal.aborted) {
-          setState({ data, loading: false, error: null });
-        }
-      } catch (err) {
-        if (err instanceof DOMException && err.name === 'AbortError') {
-          return;
-        }
-        if (!controller.signal.aborted) {
-          setState({
-            data: null,
-            loading: false,
-            error: err instanceof Error ? err.message : 'Unknown error',
-          });
-        }
-      }
+    debounceTimer.current = setTimeout(() => {
+      setDebouncedQuery(query);
     }, 300);
 
     return () => {
       if (debounceTimer.current) {
         clearTimeout(debounceTimer.current);
       }
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
     };
   }, [query]);
 
-  return state;
+  const { data, loading, error } = useQuery<SearchPodcastsResponse>(SEARCH_PODCASTS, {
+    variables: { query: debouncedQuery },
+    skip: debouncedQuery.length < 2,
+    fetchPolicy: 'cache-first',
+  });
+
+  if (debouncedQuery.length < 2) {
+    return { data: null, loading: false, error: null };
+  }
+
+  return {
+    data: data?.searchPodcasts ?? null,
+    loading,
+    error: error?.message ?? null,
+  };
 }
+
+// --- Hook: useTrendingPodcasts ---
 
 export function useTrendingPodcasts() {
-  const [state, setState] = useState<FetchState<Podcast[]>>({
-    data: null,
-    loading: true,
-    error: null,
-  });
+  const { data, loading, error, refetch } = useQuery<TrendingPodcastsResponse>(
+    GET_TRENDING_PODCASTS,
+    { fetchPolicy: 'cache-and-network' }
+  );
 
-  const fetchTrending = useCallback(async () => {
-    setState({ data: null, loading: true, error: null });
-    try {
-      const data = await fetchJson<{ feeds: Podcast[] }>('/podcast/trending');
-      setState({ data: data.feeds, loading: false, error: null });
-    } catch (err) {
-      setState({
-        data: null,
-        loading: false,
-        error: err instanceof Error ? err.message : 'Unknown error',
-      });
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchTrending();
-  }, [fetchTrending]);
-
-  return { ...state, refetch: fetchTrending };
+  return {
+    data: data?.trendingPodcasts?.feeds ?? null,
+    loading,
+    error: error?.message ?? null,
+    refetch: () => { refetch(); },
+  };
 }
 
+// --- Hook: usePodcastEpisodes ---
+
 export function usePodcastEpisodes(feedId: number | null) {
-  const [state, setState] = useState<FetchState<Episode[]>>({
-    data: null,
-    loading: false,
-    error: null,
+  const { data, loading, error } = useQuery<PodcastEpisodesResponse>(GET_PODCAST_EPISODES, {
+    variables: { feedId: feedId! },
+    skip: feedId === null,
+    fetchPolicy: 'cache-and-network',
   });
 
-  useEffect(() => {
-    if (feedId === null) {
-      setState({ data: null, loading: false, error: null });
-      return;
-    }
-
-    let cancelled = false;
-    setState({ data: null, loading: true, error: null });
-
-    (async () => {
-      try {
-        const data = await fetchJson<{ items: Episode[] }>(
-          `/podcast/episodes?feedId=${feedId}`
-        );
-        if (!cancelled) {
-          setState({ data: data.items, loading: false, error: null });
-        }
-      } catch (err) {
-        if (!cancelled) {
-          setState({
-            data: null,
-            loading: false,
-            error: err instanceof Error ? err.message : 'Unknown error',
-          });
-        }
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [feedId]);
-
-  return state;
+  return {
+    data: data?.podcastEpisodes?.items ?? null,
+    loading,
+    error: error?.message ?? null,
+  };
 }

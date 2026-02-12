@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
+import { MockedProvider } from '@apollo/client/testing/react';
 import { MemoryRouter } from 'react-router';
 import PodcastPlayer from './PodcastPlayer';
 
@@ -45,7 +46,11 @@ vi.mock('../hooks/usePodcastData', () => ({
 }));
 
 const renderWithProviders = (ui: React.ReactElement) => {
-  return render(<MemoryRouter>{ui}</MemoryRouter>);
+  return render(
+    <MockedProvider mocks={[]} addTypename={false}>
+      <MemoryRouter>{ui}</MemoryRouter>
+    </MockedProvider>
+  );
 };
 
 describe('PodcastPlayer', () => {

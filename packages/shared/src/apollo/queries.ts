@@ -208,7 +208,7 @@ export const SEARCH_PODCASTS = gql`
         id
         title
         author
-        image
+        artwork
         description
         categories
         episodeCount
@@ -226,7 +226,7 @@ export const GET_TRENDING_PODCASTS = gql`
         id
         title
         author
-        image
+        artwork
         description
         categories
         episodeCount
