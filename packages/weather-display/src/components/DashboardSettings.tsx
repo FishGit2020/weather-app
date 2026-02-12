@@ -77,7 +77,7 @@ export default function DashboardSettings({ visibility, onChange }: Props) {
   };
 
   return (
-    <div className="relative" ref={panelRef}>
+    <div className="relative z-50" ref={panelRef}>
       <button
         onClick={() => setOpen(!open)}
         className="p-1.5 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
