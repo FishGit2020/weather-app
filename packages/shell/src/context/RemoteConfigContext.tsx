@@ -20,6 +20,7 @@ declare global {
   interface Window {
     __REMOTE_CONFIG__?: Record<string, string>;
     __getFirebaseIdToken?: () => Promise<string | null>;
+    __getAppCheckToken?: () => Promise<string | null>;
   }
 }
 

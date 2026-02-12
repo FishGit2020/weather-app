@@ -3,7 +3,6 @@ import { SetContextLink } from '@apollo/client/link/context';
 import { GraphQLWsLink } from '@apollo/client/link/subscriptions';
 import { getMainDefinition } from '@apollo/client/utilities';
 import { createClient } from 'graphql-ws';
-import { getRecaptchaToken } from '../utils/recaptcha';
 
 // Check if we're on the client side
 const isBrowser = typeof window !== 'undefined';
@@ -43,23 +42,18 @@ export function createApolloClient(graphqlUrl?: string, wsUrl?: string) {
     };
   });
 
-  // reCAPTCHA v3 link: attaches a fresh token to every HTTP request
-  // SetContextLink(prevContext, operation) — note: argument order is swapped vs old setContext
-  const recaptchaLink = new SetContextLink(async (prevContext, operation) => {
-    // Convert PascalCase operation name to snake_case for reCAPTCHA action
-    const action = (operation.operationName || 'graphql')
-      .replace(/([a-z])([A-Z])/g, '$1_$2')
-      .toLowerCase();
-    const token = await getRecaptchaToken(action);
+  // App Check link: attaches Firebase App Check token for bot protection
+  const appCheckLink = new SetContextLink(async (prevContext) => {
+    const appCheckToken = await (window as any).__getAppCheckToken?.();
     return {
       headers: {
         ...prevContext.headers,
-        ...(token ? { 'x-recaptcha-token': token } : {})
+        ...(appCheckToken ? { 'X-Firebase-AppCheck': appCheckToken } : {})
       }
     };
   });
 
-  const httpWithAuth = ApolloLink.from([authLink, recaptchaLink, httpLink]);
+  const httpWithAuth = ApolloLink.from([authLink, appCheckLink, httpLink]);
 
   let wsLink: GraphQLWsLink | null = null;
 

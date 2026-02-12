@@ -3,7 +3,7 @@ import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChang
 import { getFirestore, doc, getDoc, setDoc, updateDoc, serverTimestamp, Firestore } from 'firebase/firestore';
 import { getPerformance, FirebasePerformance } from 'firebase/performance';
 import { getAnalytics, setUserId, setUserProperties, logEvent as firebaseLogEvent, Analytics } from 'firebase/analytics';
-import { initializeAppCheck, ReCaptchaEnterpriseProvider } from 'firebase/app-check';
+import { initializeAppCheck, ReCaptchaEnterpriseProvider, getToken, AppCheck } from 'firebase/app-check';
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -24,6 +24,7 @@ let db: Firestore | null = null;
 let perf: FirebasePerformance | null = null;
 let analytics: Analytics | null = null;
 let googleProvider: GoogleAuthProvider | null = null;
+let appCheck: AppCheck | null = null;
 
 if (firebaseEnabled) {
   app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
@@ -37,7 +38,7 @@ if (firebaseEnabled) {
   if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
     (self as any).FIREBASE_APPCHECK_DEBUG_TOKEN = true;
   }
-  initializeAppCheck(app, {
+  appCheck = initializeAppCheck(app, {
     provider: new ReCaptchaEnterpriseProvider('6Lcvm2ksAAAAAPQ63bPl94XAfS2gTn2Fu4zMmT4f'),
     isTokenAutoRefreshEnabled: true,
   });
@@ -46,6 +47,17 @@ if (firebaseEnabled) {
   window.__getFirebaseIdToken = async () => {
     if (!auth?.currentUser) return null;
     return auth.currentUser.getIdToken();
+  };
+
+  // Expose App Check token getter for MFEs to attach to custom HTTP requests
+  window.__getAppCheckToken = async () => {
+    if (!appCheck) return null;
+    try {
+      const result = await getToken(appCheck, false);
+      return result.token;
+    } catch {
+      return null;
+    }
   };
 }
 
