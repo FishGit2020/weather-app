@@ -10,7 +10,7 @@ export default defineConfig({
       filename: 'remoteEntry.js',
       exposes: {
         './WeatherDisplay': './src/components/WeatherDisplay.tsx',
-        './CurrentWeather': './src/components/CurrentWeather.tsx',
+        './CurrentWeather': './src/components/CurrentWeatherV1.tsx',
         './Forecast': './src/components/Forecast.tsx'
       },
       shared: ['react', 'react-dom', 'react-router', '@apollo/client', '@weather/shared']

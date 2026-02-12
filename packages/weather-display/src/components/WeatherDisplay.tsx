@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useSearchParams, Link } from 'react-router';
-import { useWeatherData, useRemoteConfig, subscribeToMFEvent, MFEvents, CitySelectedEvent, useTranslation } from '@weather/shared';
-import CurrentWeather from './CurrentWeather';
-import CurrentWeatherV1 from './CurrentWeatherV1';
+import { useWeatherData, subscribeToMFEvent, MFEvents, CitySelectedEvent, useTranslation } from '@weather/shared';
+import CurrentWeather from './CurrentWeatherV1';
 import Forecast from './Forecast';
 import HourlyForecast from './HourlyForecast';
 import WeatherAlerts from './WeatherAlerts';
@@ -43,9 +42,6 @@ export default function WeatherDisplay() {
 
   const { t } = useTranslation();
   const [widgets, setWidgets] = useState<WidgetVisibility>(loadWidgetVisibility);
-
-  const remoteConfig = useRemoteConfig();
-  const useV1Layout = remoteConfig.new_exp === 'variant_a';
 
   const [refreshing, setRefreshing] = useState(false);
 
@@ -186,7 +182,7 @@ export default function WeatherDisplay() {
 
       {widgets.weatherAlerts && current && forecast && <WeatherAlerts current={current} forecast={forecast} />}
 
-      {widgets.currentWeather && current && (useV1Layout ? <CurrentWeatherV1 data={current} /> : <CurrentWeather data={current} />)}
+      {widgets.currentWeather && current && <CurrentWeather data={current} />}
 
       {widgets.sunriseSunset && current && <SunriseSunset data={current} />}
 
