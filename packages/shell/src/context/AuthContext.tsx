@@ -6,6 +6,7 @@ import {
   logOut,
   getUserProfile,
   updateUserDarkMode,
+  updateUserLocale,
   addRecentCity,
   removeRecentCity,
   getRecentCities,
@@ -25,6 +26,7 @@ interface AuthContextType {
   signIn: () => Promise<void>;
   signOut: () => Promise<void>;
   updateDarkMode: (darkMode: boolean) => Promise<void>;
+  updateLocale: (locale: string) => Promise<void>;
   addCity: (city: Omit<RecentCity, 'searchedAt'>) => Promise<void>;
   removeCity: (cityId: string) => Promise<void>;
   toggleFavorite: (city: FavoriteCity) => Promise<boolean>;
@@ -109,6 +111,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const updateLocale = useCallback(async (locale: string) => {
+    if (user) {
+      await updateUserLocale(user.uid, locale);
+      setProfile((prev) => (prev ? { ...prev, locale } : null));
+    }
+  }, [user]);
+
   const addCity = useCallback(async (city: Omit<RecentCity, 'searchedAt'>) => {
     if (user) {
       await addRecentCity(user.uid, city);
@@ -147,6 +156,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         signIn,
         signOut: signOutUser,
         updateDarkMode,
+        updateLocale,
         addCity,
         removeCity,
         toggleFavorite,

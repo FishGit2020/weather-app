@@ -40,6 +40,7 @@ export interface UserProfile {
   displayName: string | null;
   photoURL: string | null;
   darkMode: boolean;
+  locale?: string;
   recentCities: RecentCity[];
   favoriteCities: FavoriteCity[];
   createdAt: Date;
@@ -135,6 +136,15 @@ export async function updateUserDarkMode(uid: string, darkMode: boolean) {
   const userRef = doc(db, 'users', uid);
   await updateDoc(userRef, {
     darkMode,
+    updatedAt: serverTimestamp(),
+  });
+}
+
+export async function updateUserLocale(uid: string, locale: string) {
+  if (!db) return;
+  const userRef = doc(db, 'users', uid);
+  await updateDoc(userRef, {
+    locale,
     updatedAt: serverTimestamp(),
   });
 }

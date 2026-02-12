@@ -21,6 +21,7 @@ vi.mock('../lib/firebase', () => ({
   logOut: vi.fn(),
   getUserProfile: vi.fn().mockResolvedValue(null),
   updateUserDarkMode: vi.fn(),
+  updateUserLocale: vi.fn(),
   addRecentCity: vi.fn(),
   removeRecentCity: vi.fn(),
   getRecentCities: vi.fn().mockResolvedValue([]),
