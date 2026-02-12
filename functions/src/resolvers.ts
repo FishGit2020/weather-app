@@ -232,6 +232,22 @@ async function getStockCandles(apiKey: string, symbol: string, resolution: strin
   return response.data;
 }
 
+// ─── Podcast helpers ─────────────────────────────────────────
+
+/** PodcastIndex returns categories as { 55: "News", 59: "Politics" } (object keyed by ID).
+ *  GraphQL expects String, so we convert to "News, Politics". */
+function normalizePodcastFeeds(data: any) {
+  if (data?.feeds) {
+    data.feeds = data.feeds.map((feed: any) => ({
+      ...feed,
+      categories: feed.categories && typeof feed.categories === 'object'
+        ? Object.values(feed.categories).join(', ')
+        : feed.categories ?? null,
+    }));
+  }
+  return data;
+}
+
 // ─── Podcast API helpers (PodcastIndex) ──────────────────────
 
 function getPodcastIndexHeaders(apiKey: string, apiSecret: string): Record<string, string> {
@@ -256,8 +272,9 @@ async function searchPodcastsAPI(apiKey: string, apiSecret: string, query: strin
     headers,
     timeout: 10000,
   });
-  podcastCache.set(cacheKey, response.data, 300);
-  return response.data;
+  const result = normalizePodcastFeeds(response.data);
+  podcastCache.set(cacheKey, result, 300);
+  return result;
 }
 
 async function getTrendingPodcastsAPI(apiKey: string, apiSecret: string) {
@@ -271,8 +288,9 @@ async function getTrendingPodcastsAPI(apiKey: string, apiSecret: string) {
     headers,
     timeout: 10000,
   });
-  podcastCache.set(cacheKey, response.data, 3600);
-  return response.data;
+  const result = normalizePodcastFeeds(response.data);
+  podcastCache.set(cacheKey, result, 3600);
+  return result;
 }
 
 async function getPodcastEpisodesAPI(apiKey: string, apiSecret: string, feedId: number) {

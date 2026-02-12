@@ -3,6 +3,7 @@ import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChang
 import { getFirestore, doc, getDoc, setDoc, updateDoc, serverTimestamp, Firestore } from 'firebase/firestore';
 import { getPerformance, FirebasePerformance } from 'firebase/performance';
 import { getAnalytics, setUserId, setUserProperties, logEvent as firebaseLogEvent, Analytics } from 'firebase/analytics';
+import { initializeAppCheck, ReCaptchaEnterpriseProvider } from 'firebase/app-check';
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -31,6 +32,21 @@ if (firebaseEnabled) {
   perf = getPerformance(app);
   analytics = getAnalytics(app);
   googleProvider = new GoogleAuthProvider();
+
+  // App Check: verify requests come from our app, not bots/curl
+  if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+    (self as any).FIREBASE_APPCHECK_DEBUG_TOKEN = true;
+  }
+  initializeAppCheck(app, {
+    provider: new ReCaptchaEnterpriseProvider('6LfGLq2grmb2oJOwWTtgJp6Zk8-6'),
+    isTokenAutoRefreshEnabled: true,
+  });
+
+  // Expose ID token getter for MFEs that can't import from shell directly
+  window.__getFirebaseIdToken = async () => {
+    if (!auth?.currentUser) return null;
+    return auth.currentUser.getIdToken();
+  };
 }
 
 // User profile type
@@ -263,6 +279,12 @@ export function clearUserIdentity() {
 export function logEvent(eventName: string, params?: Record<string, any>) {
   if (!analytics) return;
   firebaseLogEvent(analytics, eventName, params);
+}
+
+/** Get the current user's Firebase ID token for authenticating API requests */
+export async function getFirebaseIdToken(): Promise<string | null> {
+  if (!auth?.currentUser) return null;
+  return auth.currentUser.getIdToken();
 }
 
 export { app, auth, db, perf, analytics, firebaseEnabled };

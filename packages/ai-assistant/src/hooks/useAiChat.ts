@@ -59,9 +59,13 @@ export function useAiChat() {
         content: m.content,
       }));
 
+      const idToken = await (window as any).__getFirebaseIdToken?.();
       const response = await fetch('/ai/chat', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(idToken ? { 'Authorization': `Bearer ${idToken}` } : {}),
+        },
         body: JSON.stringify({ message: content, history }),
         signal: abortRef.current.signal,
       });

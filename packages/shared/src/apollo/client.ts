@@ -32,6 +32,17 @@ export function createApolloClient(graphqlUrl?: string, wsUrl?: string) {
     uri: graphqlUrl || defaultGraphqlUrl
   });
 
+  // Auth link: attaches Firebase ID token for authenticated endpoints (stock, podcast, AI)
+  const authLink = new SetContextLink(async (prevContext) => {
+    const idToken = await (window as any).__getFirebaseIdToken?.();
+    return {
+      headers: {
+        ...prevContext.headers,
+        ...(idToken ? { 'Authorization': `Bearer ${idToken}` } : {}),
+      },
+    };
+  });
+
   // reCAPTCHA v3 link: attaches a fresh token to every HTTP request
   // SetContextLink(prevContext, operation) — note: argument order is swapped vs old setContext
   const recaptchaLink = new SetContextLink(async (prevContext, operation) => {
@@ -48,7 +59,7 @@ export function createApolloClient(graphqlUrl?: string, wsUrl?: string) {
     };
   });
 
-  const httpWithRecaptcha = recaptchaLink.concat(httpLink);
+  const httpWithAuth = ApolloLink.from([authLink, recaptchaLink, httpLink]);
 
   let wsLink: GraphQLWsLink | null = null;
 
@@ -77,9 +88,9 @@ export function createApolloClient(graphqlUrl?: string, wsUrl?: string) {
           );
         },
         wsLink,
-        httpWithRecaptcha
+        httpWithAuth
       )
-    : httpWithRecaptcha;
+    : httpWithAuth;
 
   return new ApolloClient({
     link: splitLink,

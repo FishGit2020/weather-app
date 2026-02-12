@@ -1,14 +1,19 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslation } from '@weather/shared';
-import { requestNotificationPermission, onForegroundMessage } from '../lib/messaging';
+import { requestNotificationPermission, onForegroundMessage, subscribeToWeatherAlerts, unsubscribeFromWeatherAlerts } from '../lib/messaging';
 import { firebaseEnabled } from '../lib/firebase';
+import { useAuth } from '../context/AuthContext';
+
+const STORAGE_KEY = 'weather-alerts-enabled';
 
 export default function NotificationBell() {
   const { t } = useTranslation();
-  const [enabled, setEnabled] = useState(false);
+  const { favoriteCities } = useAuth();
+  const [enabled, setEnabled] = useState(() => localStorage.getItem(STORAGE_KEY) === 'true');
   const [loading, setLoading] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [toast, setToast] = useState<{ title?: string; body?: string } | null>(null);
+  const [fcmToken, setFcmToken] = useState<string | null>(null);
   const feedbackTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Don't render if Firebase or Notification API isn't available
@@ -21,13 +26,30 @@ export default function NotificationBell() {
   };
 
   const handleClick = useCallback(async () => {
-    if (enabled) {
-      showFeedback(t('notifications.alreadyEnabled'));
-      return;
-    }
     if (loading) return;
 
-    // Check if browser has blocked notifications
+    // Toggle OFF → unsubscribe
+    if (enabled && fcmToken) {
+      setLoading(true);
+      try {
+        await unsubscribeFromWeatherAlerts(fcmToken);
+        setEnabled(false);
+        localStorage.setItem(STORAGE_KEY, 'false');
+        showFeedback(t('notifications.enable'));
+      } catch {
+        showFeedback(t('notifications.failedToEnable'));
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
+
+    // Toggle ON → subscribe
+    if (!favoriteCities || favoriteCities.length === 0) {
+      showFeedback(t('notifications.addFavoritesFirst'));
+      return;
+    }
+
     if (Notification.permission === 'denied') {
       showFeedback(t('notifications.blocked'));
       return;
@@ -37,10 +59,17 @@ export default function NotificationBell() {
     try {
       const token = await requestNotificationPermission();
       if (token) {
-        setEnabled(true);
-        showFeedback(t('notifications.enabled'));
+        const cities = favoriteCities.map(c => ({ lat: c.lat, lon: c.lon, name: c.name }));
+        const ok = await subscribeToWeatherAlerts(token, cities);
+        if (ok) {
+          setFcmToken(token);
+          setEnabled(true);
+          localStorage.setItem(STORAGE_KEY, 'true');
+          showFeedback(t('notifications.enabled'));
+        } else {
+          showFeedback(t('notifications.subscriptionFailed'));
+        }
       } else {
-        // Token is null — either VAPID key missing or permission denied after prompt
         if (Notification.permission === 'denied') {
           showFeedback(t('notifications.blocked'));
         } else {
@@ -52,7 +81,14 @@ export default function NotificationBell() {
     } finally {
       setLoading(false);
     }
-  }, [enabled, loading]);
+  }, [enabled, loading, fcmToken, favoriteCities]);
+
+  // Re-subscribe when favorites change (if alerts are enabled)
+  useEffect(() => {
+    if (!enabled || !fcmToken || !favoriteCities || favoriteCities.length === 0) return;
+    const cities = favoriteCities.map(c => ({ lat: c.lat, lon: c.lon, name: c.name }));
+    subscribeToWeatherAlerts(fcmToken, cities);
+  }, [favoriteCities, enabled, fcmToken]);
 
   // Listen for foreground messages when enabled
   useEffect(() => {
