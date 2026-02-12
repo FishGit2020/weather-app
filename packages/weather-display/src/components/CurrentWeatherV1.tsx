@@ -1,5 +1,5 @@
 import React from 'react';
-import { CurrentWeather as CurrentWeatherType, getWeatherIconUrl, getWindDirection, getWeatherDescription, useUnits, formatTemperature, formatWindSpeed } from '@weather/shared';
+import { CurrentWeather as CurrentWeatherType, getWeatherIconUrl, getWindDirection, getWeatherDescription, useUnits, formatTemperature, formatWindSpeed, useTranslation } from '@weather/shared';
 
 interface Props {
   data: CurrentWeatherType;
@@ -18,6 +18,7 @@ const conditionGradients: Record<string, string> = {
 };
 
 export default function CurrentWeatherV1({ data }: Props) {
+  const { t } = useTranslation();
   const { tempUnit, speedUnit } = useUnits();
   const condition = data.weather[0]?.main || 'Clear';
   const gradient = conditionGradients[condition] || conditionGradients.Clear;
@@ -43,28 +44,28 @@ export default function CurrentWeatherV1({ data }: Props) {
           {data.weather[0]?.description}
         </p>
         <p className="text-sm mt-1 opacity-75">
-          Feels like {formatTemperature(data.feels_like, tempUnit)}
+          {t('weather.feelsLike')} {formatTemperature(data.feels_like, tempUnit)}
         </p>
       </div>
 
       {/* Horizontal metrics row */}
       <div className="relative z-10 flex justify-around mt-8 pt-6 border-t border-white/30">
         <div className="text-center">
-          <p className="text-xs uppercase tracking-wide opacity-75">Humidity</p>
+          <p className="text-xs uppercase tracking-wide opacity-75">{t('weather.humidity')}</p>
           <p className="text-lg font-semibold">{data.humidity}%</p>
         </div>
         <div className="text-center">
-          <p className="text-xs uppercase tracking-wide opacity-75">Wind</p>
+          <p className="text-xs uppercase tracking-wide opacity-75">{t('weather.wind')}</p>
           <p className="text-lg font-semibold">
             {formatWindSpeed(data.wind.speed, speedUnit)} {getWindDirection(data.wind.deg)}
           </p>
         </div>
         <div className="text-center">
-          <p className="text-xs uppercase tracking-wide opacity-75">Pressure</p>
+          <p className="text-xs uppercase tracking-wide opacity-75">{t('weather.pressure')}</p>
           <p className="text-lg font-semibold">{data.pressure} hPa</p>
         </div>
         <div className="text-center">
-          <p className="text-xs uppercase tracking-wide opacity-75">Clouds</p>
+          <p className="text-xs uppercase tracking-wide opacity-75">{t('weather.cloudiness')}</p>
           <p className="text-lg font-semibold">{data.clouds.all}%</p>
         </div>
       </div>

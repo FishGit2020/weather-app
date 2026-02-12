@@ -1,11 +1,12 @@
 import React from 'react';
-import { HourlyForecast } from '@weather/shared';
+import { HourlyForecast, useTranslation } from '@weather/shared';
 
 interface Props {
   data: HourlyForecast[];
 }
 
 export default function HourlyChart({ data }: Props) {
+  const { t, locale } = useTranslation();
   const hours = data.slice(0, 24);
   if (hours.length < 2) return null;
 
@@ -37,17 +38,17 @@ export default function HourlyChart({ data }: Props) {
   const barWidth = plotWidth / hours.length * 0.6;
 
   const formatTime = (dt: number) => {
-    return new Date(dt * 1000).toLocaleTimeString('en-US', { hour: 'numeric' });
+    return new Date(dt * 1000).toLocaleTimeString(locale, { hour: 'numeric' });
   };
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-lg">
       <div className="flex items-center gap-4 mb-3 text-xs text-gray-500 dark:text-gray-400">
         <span className="flex items-center gap-1">
-          <span className="w-3 h-0.5 bg-blue-500 inline-block rounded" /> Temperature
+          <span className="w-3 h-0.5 bg-blue-500 inline-block rounded" /> {t('weather.temperature')}
         </span>
         <span className="flex items-center gap-1">
-          <span className="w-3 h-3 bg-blue-200 dark:bg-blue-800 inline-block rounded-sm opacity-60" /> Rain %
+          <span className="w-3 h-3 bg-blue-200 dark:bg-blue-800 inline-block rounded-sm opacity-60" /> {t('weather.rainPercent')}
         </span>
       </div>
 
@@ -97,7 +98,7 @@ export default function HourlyChart({ data }: Props) {
                       className="fill-gray-400 dark:fill-gray-500"
                       fontSize={9}
                     >
-                      {i === 0 ? 'Now' : formatTime(h.dt)}
+                      {i === 0 ? t('weather.now') : formatTime(h.dt)}
                     </text>
                   </>
                 )}
