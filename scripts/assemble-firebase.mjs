@@ -59,6 +59,12 @@ const weatherDisplayDest = path.join(firebaseDir, 'weather-display');
 console.log(`Copying weather-display to ${weatherDisplayDest}`);
 copyDir(weatherDisplayDist, weatherDisplayDest);
 
+// 4. Copy stock-tracker MF to /stock-tracker
+const stockTrackerDist = path.join(rootDir, 'packages', 'stock-tracker', 'dist');
+const stockTrackerDest = path.join(firebaseDir, 'stock-tracker');
+console.log(`Copying stock-tracker to ${stockTrackerDest}`);
+copyDir(stockTrackerDist, stockTrackerDest);
+
 console.log('\nFirebase deployment directory assembled successfully!');
 console.log(`Output: ${firebaseDir}`);
 

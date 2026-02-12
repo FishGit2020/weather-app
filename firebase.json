@@ -12,12 +12,20 @@
         "function": "graphql"
       },
       {
+        "source": "/stock/**",
+        "function": "stockProxy"
+      },
+      {
         "source": "/city-search/**",
         "destination": "/city-search/index.html"
       },
       {
         "source": "/weather-display/**",
         "destination": "/weather-display/index.html"
+      },
+      {
+        "source": "/stock-tracker/**",
+        "destination": "/stock-tracker/index.html"
       },
       {
         "source": "**",

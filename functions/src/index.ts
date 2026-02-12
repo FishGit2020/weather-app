@@ -5,6 +5,7 @@ import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { getMessaging } from 'firebase-admin/messaging';
 import type { Request, Response } from 'express';
 import axios from 'axios';
+import NodeCache from 'node-cache';
 import { verifyRecaptchaToken } from './recaptcha.js';
 
 // Initialize Firebase Admin (idempotent)
@@ -278,6 +279,103 @@ export const checkWeatherAlerts = onSchedule(
         docs.forEach(doc => batch.delete(doc.ref));
       }
       await batch.commit();
+    }
+  }
+);
+
+// ─── Stock Proxy (Finnhub) ──────────────────────────────────────────
+
+const stockCache = new NodeCache();
+
+/**
+ * Proxy for Finnhub stock API.
+ * Routes:
+ *   GET /stock/search?q=...
+ *   GET /stock/quote?symbol=...
+ *   GET /stock/profile?symbol=...
+ *   GET /stock/candles?symbol=...&resolution=D&from=...&to=...
+ */
+export const stockProxy = onRequest(
+  {
+    cors: true,
+    maxInstances: 10,
+    memory: '256MiB',
+    timeoutSeconds: 30,
+    secrets: ['FINNHUB_API_KEY'],
+  },
+  async (req: Request, res: Response) => {
+    const apiKey = process.env.FINNHUB_API_KEY;
+    if (!apiKey) {
+      res.status(500).json({ error: 'FINNHUB_API_KEY not configured' });
+      return;
+    }
+
+    const path = req.path.replace(/^\/stock\//, '');
+    const baseUrl = 'https://finnhub.io/api/v1';
+    let url: string;
+    let cacheKey: string;
+    let cacheTTL: number;
+
+    switch (path) {
+      case 'search': {
+        const q = req.query.q as string;
+        if (!q) { res.status(400).json({ error: 'q parameter required' }); return; }
+        url = `${baseUrl}/search?q=${encodeURIComponent(q)}`;
+        cacheKey = `stock:search:${q}`;
+        cacheTTL = 300; // 5 min
+        break;
+      }
+      case 'quote': {
+        const symbol = req.query.symbol as string;
+        if (!symbol) { res.status(400).json({ error: 'symbol parameter required' }); return; }
+        url = `${baseUrl}/quote?symbol=${encodeURIComponent(symbol)}`;
+        cacheKey = `stock:quote:${symbol}`;
+        cacheTTL = 30; // 30 sec
+        break;
+      }
+      case 'profile': {
+        const symbol = req.query.symbol as string;
+        if (!symbol) { res.status(400).json({ error: 'symbol parameter required' }); return; }
+        url = `${baseUrl}/stock/profile2?symbol=${encodeURIComponent(symbol)}`;
+        cacheKey = `stock:profile:${symbol}`;
+        cacheTTL = 3600; // 1 hr
+        break;
+      }
+      case 'candles': {
+        const symbol = req.query.symbol as string;
+        const resolution = (req.query.resolution as string) || 'D';
+        const from = req.query.from as string;
+        const to = req.query.to as string;
+        if (!symbol || !from || !to) { res.status(400).json({ error: 'symbol, from, to parameters required' }); return; }
+        url = `${baseUrl}/stock/candle?symbol=${encodeURIComponent(symbol)}&resolution=${resolution}&from=${from}&to=${to}`;
+        cacheKey = `stock:candles:${symbol}:${resolution}:${from}:${to}`;
+        cacheTTL = 300; // 5 min
+        break;
+      }
+      default:
+        res.status(404).json({ error: `Unknown stock route: ${path}` });
+        return;
+    }
+
+    // Check cache
+    const cached = stockCache.get<any>(cacheKey);
+    if (cached) {
+      res.status(200).json(cached);
+      return;
+    }
+
+    try {
+      const response = await axios.get(url, {
+        headers: { 'X-Finnhub-Token': apiKey },
+        timeout: 10000,
+      });
+      stockCache.set(cacheKey, response.data, cacheTTL);
+      res.status(200).json(response.data);
+    } catch (err: any) {
+      console.error(`Stock proxy error (${path}):`, err.message);
+      res.status(err.response?.status || 500).json({
+        error: err.response?.data?.error || err.message || 'Failed to fetch stock data',
+      });
     }
   }
 );

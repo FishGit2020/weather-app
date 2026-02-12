@@ -15,6 +15,10 @@ const weatherDisplayRemote = isProduction
   ? '/weather-display/assets/remoteEntry.js'
   : 'http://localhost:3002/assets/remoteEntry.js';
 
+const stockTrackerRemote = isProduction
+  ? '/stock-tracker/assets/remoteEntry.js'
+  : 'http://localhost:3005/assets/remoteEntry.js';
+
 export default defineConfig({
   plugins: [
     react(),
@@ -22,7 +26,8 @@ export default defineConfig({
       name: 'shell',
       remotes: {
         citySearch: citySearchRemote,
-        weatherDisplay: weatherDisplayRemote
+        weatherDisplay: weatherDisplayRemote,
+        stockTracker: stockTrackerRemote
       },
       shared: ['react', 'react-dom', 'react-router', '@apollo/client', '@weather/shared']
     }),
