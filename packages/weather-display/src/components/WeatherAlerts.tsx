@@ -1,9 +1,9 @@
 import React from 'react';
-import { CurrentWeather, ForecastDay } from '@weather/shared';
+import { CurrentWeather, ForecastDay, useTranslation, TranslationKey } from '@weather/shared';
 
 interface Alert {
   severity: 'warning' | 'watch' | 'info';
-  title: string;
+  titleKey: TranslationKey;
   message: string;
 }
 
@@ -12,23 +12,23 @@ function generateAlerts(current: CurrentWeather, forecast: ForecastDay[]): Alert
 
   // Extreme heat
   if (current.temp >= 38) {
-    alerts.push({ severity: 'warning', title: 'Extreme Heat', message: `Current temperature is ${Math.round(current.temp)}°C. Stay hydrated and avoid prolonged outdoor exposure.` });
+    alerts.push({ severity: 'warning', titleKey: 'alert.extremeHeat', message: `Current temperature is ${Math.round(current.temp)}\u00B0C. Stay hydrated and avoid prolonged outdoor exposure.` });
   } else if (current.temp >= 33) {
-    alerts.push({ severity: 'watch', title: 'Heat Advisory', message: `Temperature is ${Math.round(current.temp)}°C. Take precautions if spending time outdoors.` });
+    alerts.push({ severity: 'watch', titleKey: 'alert.heatAdvisory', message: `Temperature is ${Math.round(current.temp)}\u00B0C. Take precautions if spending time outdoors.` });
   }
 
   // Extreme cold
   if (current.temp <= -20) {
-    alerts.push({ severity: 'warning', title: 'Extreme Cold', message: `Temperature is ${Math.round(current.temp)}°C. Risk of frostbite — limit outdoor exposure.` });
+    alerts.push({ severity: 'warning', titleKey: 'alert.extremeCold', message: `Temperature is ${Math.round(current.temp)}\u00B0C. Risk of frostbite \u2014 limit outdoor exposure.` });
   } else if (current.temp <= -10) {
-    alerts.push({ severity: 'watch', title: 'Cold Advisory', message: `Temperature is ${Math.round(current.temp)}°C. Dress warmly and watch for ice.` });
+    alerts.push({ severity: 'watch', titleKey: 'alert.coldAdvisory', message: `Temperature is ${Math.round(current.temp)}\u00B0C. Dress warmly and watch for ice.` });
   }
 
   // High wind
   if (current.wind.speed >= 20) {
-    alerts.push({ severity: 'warning', title: 'High Wind Warning', message: `Wind speeds at ${Math.round(current.wind.speed)} m/s${current.wind.gust ? ` with gusts up to ${Math.round(current.wind.gust)} m/s` : ''}. Secure loose objects.` });
+    alerts.push({ severity: 'warning', titleKey: 'alert.highWindWarning', message: `Wind speeds at ${Math.round(current.wind.speed)} m/s${current.wind.gust ? ` with gusts up to ${Math.round(current.wind.gust)} m/s` : ''}. Secure loose objects.` });
   } else if (current.wind.speed >= 13) {
-    alerts.push({ severity: 'watch', title: 'Wind Advisory', message: `Wind speeds at ${Math.round(current.wind.speed)} m/s. Be cautious driving.` });
+    alerts.push({ severity: 'watch', titleKey: 'alert.windAdvisory', message: `Wind speeds at ${Math.round(current.wind.speed)} m/s. Be cautious driving.` });
   }
 
   // Severe weather conditions (thunderstorm, tornado, etc.)
@@ -36,18 +36,18 @@ function generateAlerts(current: CurrentWeather, forecast: ForecastDay[]): Alert
   const weatherId = current.weather[0]?.id || 0;
 
   if (weatherId >= 200 && weatherId < 300) {
-    alerts.push({ severity: 'warning', title: 'Thunderstorm', message: 'Thunderstorm activity detected. Seek shelter indoors.' });
+    alerts.push({ severity: 'warning', titleKey: 'alert.thunderstorm', message: 'Thunderstorm activity detected. Seek shelter indoors.' });
   }
 
   // Heavy rain from forecast
   const upcomingRain = forecast.slice(0, 3).filter(d => d.pop >= 0.7);
   if (upcomingRain.length > 0) {
-    alerts.push({ severity: 'info', title: 'Rain Expected', message: `High chance of rain in the next ${upcomingRain.length} day(s). Don't forget an umbrella!` });
+    alerts.push({ severity: 'info', titleKey: 'alert.rainExpected', message: `High chance of rain in the next ${upcomingRain.length} day(s). Don't forget an umbrella!` });
   }
 
   // Poor visibility / fog
   if (mainWeather === 'fog' || mainWeather === 'mist' || mainWeather === 'haze') {
-    alerts.push({ severity: 'info', title: 'Low Visibility', message: `${current.weather[0]?.description}. Drive carefully and use fog lights.` });
+    alerts.push({ severity: 'info', titleKey: 'alert.lowVisibility', message: `${current.weather[0]?.description}. Drive carefully and use fog lights.` });
   }
 
   return alerts;
@@ -80,6 +80,7 @@ interface Props {
 }
 
 export default function WeatherAlerts({ current, forecast }: Props) {
+  const { t } = useTranslation();
   const alerts = generateAlerts(current, forecast);
   if (alerts.length === 0) return null;
 
@@ -93,7 +94,7 @@ export default function WeatherAlerts({ current, forecast }: Props) {
               <path strokeLinecap="round" strokeLinejoin="round" d={config.icon} />
             </svg>
             <div>
-              <p className={`font-medium text-sm ${config.text}`}>{alert.title}</p>
+              <p className={`font-medium text-sm ${config.text}`}>{t(alert.titleKey)}</p>
               <p className={`text-sm mt-0.5 ${config.text} opacity-80`}>{alert.message}</p>
             </div>
           </div>

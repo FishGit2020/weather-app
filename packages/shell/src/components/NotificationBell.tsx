@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useTranslation } from '@weather/shared';
 import { requestNotificationPermission, onForegroundMessage } from '../lib/messaging';
 import { firebaseEnabled } from '../lib/firebase';
 
 export default function NotificationBell() {
+  const { t } = useTranslation();
   const [enabled, setEnabled] = useState(false);
   const [loading, setLoading] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
@@ -20,14 +22,14 @@ export default function NotificationBell() {
 
   const handleClick = useCallback(async () => {
     if (enabled) {
-      showFeedback('Notifications already enabled');
+      showFeedback(t('notifications.alreadyEnabled'));
       return;
     }
     if (loading) return;
 
     // Check if browser has blocked notifications
     if (Notification.permission === 'denied') {
-      showFeedback('Notifications blocked by browser');
+      showFeedback(t('notifications.blocked'));
       return;
     }
 
@@ -36,17 +38,17 @@ export default function NotificationBell() {
       const token = await requestNotificationPermission();
       if (token) {
         setEnabled(true);
-        showFeedback('Notifications enabled');
+        showFeedback(t('notifications.enabled'));
       } else {
         // Token is null — either VAPID key missing or permission denied after prompt
         if (Notification.permission === 'denied') {
-          showFeedback('Notifications blocked by browser');
+          showFeedback(t('notifications.blocked'));
         } else {
-          showFeedback('Push notifications not configured');
+          showFeedback(t('notifications.notConfigured'));
         }
       }
     } catch {
-      showFeedback('Failed to enable notifications');
+      showFeedback(t('notifications.failedToEnable'));
     } finally {
       setLoading(false);
     }
@@ -71,8 +73,8 @@ export default function NotificationBell() {
               ? 'text-blue-500 dark:text-blue-400'
               : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
           }`}
-          aria-label={enabled ? 'Notifications enabled' : 'Enable notifications'}
-          title={enabled ? 'Notifications enabled' : 'Enable notifications'}
+          aria-label={enabled ? t('notifications.enabled') : t('notifications.enable')}
+          title={enabled ? t('notifications.enabled') : t('notifications.enable')}
         >
           {loading ? (
             <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">

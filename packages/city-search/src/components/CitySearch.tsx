@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router';
 import { useLazyQuery } from '@apollo/client/react';
-import { SEARCH_CITIES, REVERSE_GEOCODE, City, eventBus, MFEvents } from '@weather/shared';
+import { SEARCH_CITIES, REVERSE_GEOCODE, City, eventBus, MFEvents, useTranslation } from '@weather/shared';
 import WeatherPreview from './WeatherPreview';
 import './CitySearch.css';
 
@@ -37,6 +37,7 @@ interface Props {
 }
 
 export default function CitySearch({ onCitySelect, recentCities = [], onRemoveCity }: Props) {
+  const { t } = useTranslation();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<City[]>([]);
   const [inputFocused, setInputFocused] = useState(false);
@@ -55,12 +56,12 @@ export default function CitySearch({ onCitySelect, recentCities = [], onRemoveCi
       if (data.reverseGeocode) {
         handleCityClick(data.reverseGeocode);
       } else {
-        setGeoError('Could not determine location');
+        setGeoError(t('search.couldNotDetermineLocation'));
       }
     },
     onError: () => {
       setGeoLoading(false);
-      setGeoError('Failed to look up location');
+      setGeoError(t('search.failedToLookUp'));
     }
   });
 
@@ -133,7 +134,7 @@ export default function CitySearch({ onCitySelect, recentCities = [], onRemoveCi
     setGeoLoading(true);
 
     if (!navigator.geolocation) {
-      setGeoError('Geolocation not supported');
+      setGeoError(t('search.geolocationNotSupported'));
       setGeoLoading(false);
       return;
     }
@@ -148,16 +149,16 @@ export default function CitySearch({ onCitySelect, recentCities = [], onRemoveCi
         setGeoLoading(false);
         switch (err.code) {
           case err.PERMISSION_DENIED:
-            setGeoError('Location permission denied');
+            setGeoError(t('search.locationPermissionDenied'));
             break;
           case err.POSITION_UNAVAILABLE:
-            setGeoError('Location unavailable');
+            setGeoError(t('search.locationUnavailable'));
             break;
           case err.TIMEOUT:
-            setGeoError('Location request timed out');
+            setGeoError(t('search.locationTimeout'));
             break;
           default:
-            setGeoError('Unable to get location');
+            setGeoError(t('search.unableToGetLocation'));
         }
       },
       { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 }
@@ -170,7 +171,7 @@ export default function CitySearch({ onCitySelect, recentCities = [], onRemoveCi
   const showDropdown = inputFocused && query.length < 2 && !loading && results.length === 0;
   const isShowingRecent = recentCities.length > 0;
   const dropdownCities = isShowingRecent ? recentCities.slice(0, 5) : POPULAR_CITIES;
-  const dropdownLabel = isShowingRecent ? 'Recent Searches' : 'Popular Cities';
+  const dropdownLabel = isShowingRecent ? t('search.recentSearches') : t('search.popularCities');
 
   // Get the currently visible list for keyboard navigation
   const visibleItems: (City | RecentCity)[] = showSearchResults
@@ -238,7 +239,7 @@ export default function CitySearch({ onCitySelect, recentCities = [], onRemoveCi
         </svg>
       )}
       <span className="text-sm font-medium">
-        {geoLoading ? 'Getting location...' : 'Use my current location'}
+        {geoLoading ? t('search.gettingLocation') : t('search.useMyLocation')}
       </span>
     </button>
   );
@@ -253,7 +254,7 @@ export default function CitySearch({ onCitySelect, recentCities = [], onRemoveCi
             onChange={handleInputChange}
             onFocus={() => setInputFocused(true)}
             onKeyDown={handleKeyDown}
-            placeholder="Search for a city..."
+            placeholder={t('search.placeholder')}
             className="w-full px-4 py-3 pr-10 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-lg"
             role="combobox"
             aria-label="Search for a city"
@@ -321,8 +322,8 @@ export default function CitySearch({ onCitySelect, recentCities = [], onRemoveCi
             <svg className="w-10 h-10 mx-auto mb-2 text-gray-300 dark:text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
-            <p className="text-gray-500 dark:text-gray-400 text-sm font-medium">No cities found</p>
-            <p className="text-gray-400 dark:text-gray-500 text-xs mt-1">Try a different search term</p>
+            <p className="text-gray-500 dark:text-gray-400 text-sm font-medium">{t('search.noResults')}</p>
+            <p className="text-gray-400 dark:text-gray-500 text-xs mt-1">{t('search.noResultsHint')}</p>
           </div>
         )}
 
@@ -367,7 +368,7 @@ export default function CitySearch({ onCitySelect, recentCities = [], onRemoveCi
                     }}
                     className="ml-2 p-1 rounded-full text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 transition flex-shrink-0"
                     aria-label={`Remove ${city.name} from recent searches`}
-                    title="Remove from recent searches"
+                    title={t('search.removeFromRecent')}
                   >
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -382,7 +383,7 @@ export default function CitySearch({ onCitySelect, recentCities = [], onRemoveCi
 
       <div className="mt-4 text-center text-sm text-gray-500 dark:text-gray-400">
         <span className="inline-flex items-center px-2 py-1 bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 rounded">
-          City Search Micro Frontend
+          {t('mfe.citySearch')}
         </span>
       </div>
     </div>

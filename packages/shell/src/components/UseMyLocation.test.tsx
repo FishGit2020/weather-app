@@ -64,7 +64,7 @@ describe('UseMyLocation', () => {
   it('renders Use My Location button', () => {
     renderWithProviders(<UseMyLocation />);
 
-    expect(screen.getByText('Use My Location')).toBeInTheDocument();
+    expect(screen.getByText('Use my current location')).toBeInTheDocument();
   });
 
   it('shows loading state when clicked', () => {
@@ -74,7 +74,7 @@ describe('UseMyLocation', () => {
 
     renderWithProviders(<UseMyLocation />);
 
-    fireEvent.click(screen.getByText('Use My Location'));
+    fireEvent.click(screen.getByText('Use my current location'));
 
     expect(screen.getByText('Getting location...')).toBeInTheDocument();
   });
@@ -87,7 +87,7 @@ describe('UseMyLocation', () => {
 
     renderWithProviders(<UseMyLocation />);
 
-    fireEvent.click(screen.getByText('Use My Location'));
+    fireEvent.click(screen.getByText('Use my current location'));
 
     expect(screen.getByText('Geolocation is not supported by your browser')).toBeInTheDocument();
   });
@@ -105,7 +105,7 @@ describe('UseMyLocation', () => {
 
     renderWithProviders(<UseMyLocation />);
 
-    fireEvent.click(screen.getByText('Use My Location'));
+    fireEvent.click(screen.getByText('Use my current location'));
 
     await waitFor(() => {
       expect(screen.getByText(/Location permission denied/)).toBeInTheDocument();
@@ -125,7 +125,7 @@ describe('UseMyLocation', () => {
 
     renderWithProviders(<UseMyLocation />);
 
-    fireEvent.click(screen.getByText('Use My Location'));
+    fireEvent.click(screen.getByText('Use my current location'));
 
     await waitFor(() => {
       expect(screen.getByText('Location information unavailable')).toBeInTheDocument();
@@ -145,7 +145,7 @@ describe('UseMyLocation', () => {
 
     renderWithProviders(<UseMyLocation />);
 
-    fireEvent.click(screen.getByText('Use My Location'));
+    fireEvent.click(screen.getByText('Use my current location'));
 
     await waitFor(() => {
       expect(screen.getByText('Location request timed out')).toBeInTheDocument();
@@ -164,7 +164,7 @@ describe('UseMyLocation', () => {
 
     renderWithProviders(<UseMyLocation />);
 
-    fireEvent.click(screen.getByText('Use My Location'));
+    fireEvent.click(screen.getByText('Use my current location'));
 
     await waitFor(() => {
       expect(mockNavigate).toHaveBeenCalledWith('/weather/51.5074,-0.1278');

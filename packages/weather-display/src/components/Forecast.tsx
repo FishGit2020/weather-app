@@ -1,14 +1,15 @@
 import React from 'react';
-import { ForecastDay, getWeatherIconUrl, useUnits, convertTemp, tempUnitSymbol } from '@weather/shared';
+import { ForecastDay, getWeatherIconUrl, useUnits, convertTemp, tempUnitSymbol, useTranslation } from '@weather/shared';
 
 interface Props {
   data: ForecastDay[];
 }
 
 export default function Forecast({ data }: Props) {
+  const { t, locale } = useTranslation();
   const { tempUnit } = useUnits();
   const formatDate = (timestamp: number) => {
-    return new Date(timestamp * 1000).toLocaleDateString('en-US', {
+    return new Date(timestamp * 1000).toLocaleDateString(locale, {
       weekday: 'short',
       month: 'short',
       day: 'numeric'
@@ -23,7 +24,7 @@ export default function Forecast({ data }: Props) {
           className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-md text-center hover:shadow-lg transition"
         >
           <p className="font-medium text-gray-700 dark:text-gray-200">
-            {index === 0 ? 'Today' : formatDate(day.dt)}
+            {index === 0 ? t('weather.today') : formatDate(day.dt)}
           </p>
 
           {day.weather[0] && (
@@ -45,7 +46,7 @@ export default function Forecast({ data }: Props) {
 
           {day.pop > 0 && (
             <p className="text-xs text-blue-500 dark:text-blue-400 mt-1">
-              {Math.round(day.pop * 100)}% rain
+              {Math.round(day.pop * 100)}% {t('weather.rain')}
             </p>
           )}
         </div>

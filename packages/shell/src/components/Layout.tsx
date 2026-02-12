@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Outlet, Link, useLocation } from 'react-router';
+import { useTranslation } from '@weather/shared';
 import ThemeToggle from './ThemeToggle';
 import UnitToggle from './UnitToggle';
 import UserMenu from './UserMenu';
@@ -8,6 +9,7 @@ import OfflineIndicator from './OfflineIndicator';
 import LanguageSelector from './LanguageSelector';
 
 export default function Layout() {
+  const { t } = useTranslation();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const toggleRef = useRef<HTMLButtonElement>(null);
@@ -41,7 +43,7 @@ export default function Layout() {
         href="#main-content"
         className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[60] focus:px-4 focus:py-2 focus:bg-blue-600 focus:text-white focus:rounded-lg focus:outline-none"
       >
-        Skip to content
+        {t('nav.skipToContent')}
       </a>
       <OfflineIndicator />
       <header className="bg-white dark:bg-gray-800 shadow-md sticky top-0 z-50 transition-colors">
@@ -62,13 +64,13 @@ export default function Layout() {
                 to="/"
                 className="text-sm text-gray-600 dark:text-gray-300 hover:text-blue-500 dark:hover:text-blue-400 transition"
               >
-                Home
+                {t('nav.home')}
               </Link>
               <Link
                 to="/compare"
                 className="text-sm text-gray-600 dark:text-gray-300 hover:text-blue-500 dark:hover:text-blue-400 transition"
               >
-                Compare
+                {t('nav.compare')}
               </Link>
               <LanguageSelector />
               <UnitToggle />
@@ -109,13 +111,13 @@ export default function Layout() {
                 to="/"
                 className="block px-3 py-2 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition"
               >
-                Home
+                {t('nav.home')}
               </Link>
               <Link
                 to="/compare"
                 className="block px-3 py-2 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition"
               >
-                Compare
+                {t('nav.compare')}
               </Link>
               <div className="px-3 py-2">
                 <UserMenu />
@@ -132,7 +134,7 @@ export default function Layout() {
       <footer role="contentinfo" className="bg-gray-800 dark:bg-gray-950 text-white py-6 mt-12 transition-colors">
         <div className="container mx-auto px-4 text-center">
           <p className="text-sm">
-            Weather data provided by{' '}
+            {t('footer.dataProvider')}{' '}
             <a
               href="https://openweathermap.org"
               target="_blank"
@@ -143,7 +145,7 @@ export default function Layout() {
             </a>
           </p>
           <p className="text-xs text-gray-400 mt-2">
-            Built with React, Vite, and Micro Frontend Architecture
+            {t('footer.builtWith')}
           </p>
         </div>
       </footer>

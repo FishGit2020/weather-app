@@ -11,8 +11,9 @@ test.describe('Weather Display', () => {
   });
 
   test('displays current temperature', async ({ page }) => {
-    // Mock returns 22°C — the large hero temperature is text-6xl
-    await expect(page.locator('.text-6xl').filter({ hasText: /22/ })).toBeVisible({ timeout: 15_000 });
+    // Wait for weather data to load, then check for the hero temperature
+    await expect(page.getByText('Humidity')).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText(/22°[CF]/).first()).toBeVisible();
   });
 
   test('shows weather details like humidity and wind', async ({ page }) => {

@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import { useLazyQuery } from '@apollo/client/react';
-import { REVERSE_GEOCODE } from '@weather/shared';
+import { REVERSE_GEOCODE, useTranslation } from '@weather/shared';
 
 interface ReverseGeocodeData {
   reverseGeocode: {
@@ -20,6 +20,7 @@ interface ReverseGeocodeVars {
 }
 
 export default function UseMyLocation() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -43,7 +44,7 @@ export default function UseMyLocation() {
       // Navigate to weather page
       navigate(`/weather/${lat},${lon}`);
     } else {
-      setError('Could not determine your location name');
+      setError(t('error.couldNotDetermineLocation'));
     }
     setLoading(false);
   }, [data, navigate]);
@@ -61,7 +62,7 @@ export default function UseMyLocation() {
     setLoading(true);
 
     if (!navigator.geolocation) {
-      setError('Geolocation is not supported by your browser');
+      setError(t('error.geolocationNotSupported'));
       setLoading(false);
       return;
     }
@@ -74,16 +75,16 @@ export default function UseMyLocation() {
         });
       },
       (err) => {
-        let errorMessage = 'Unable to get your location';
+        let errorMessage = t('error.unableToGetLocation');
         switch (err.code) {
           case err.PERMISSION_DENIED:
-            errorMessage = 'Location permission denied. Please enable location access.';
+            errorMessage = t('error.locationPermissionDenied');
             break;
           case err.POSITION_UNAVAILABLE:
-            errorMessage = 'Location information unavailable';
+            errorMessage = t('error.locationUnavailable');
             break;
           case err.TIMEOUT:
-            errorMessage = 'Location request timed out';
+            errorMessage = t('error.locationTimeout');
             break;
         }
         setError(errorMessage);
@@ -122,7 +123,7 @@ export default function UseMyLocation() {
                 d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
               />
             </svg>
-            <span>Getting location...</span>
+            <span>{t('search.gettingLocation')}</span>
           </>
         ) : (
           <>
@@ -145,7 +146,7 @@ export default function UseMyLocation() {
                 d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
               />
             </svg>
-            <span>Use My Location</span>
+            <span>{t('search.useMyLocation')}</span>
           </>
         )}
       </button>

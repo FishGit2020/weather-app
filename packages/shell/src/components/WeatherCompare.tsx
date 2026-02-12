@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery } from '@apollo/client/react';
-import { GET_CURRENT_WEATHER, GET_FORECAST, getWeatherIconUrl, getWindDirection } from '@weather/shared';
+import { GET_CURRENT_WEATHER, GET_FORECAST, getWeatherIconUrl, getWindDirection, useTranslation } from '@weather/shared';
 import { useAuth } from '../context/AuthContext';
 import { FavoriteCity, RecentCity } from '../lib/firebase';
 
@@ -19,6 +19,7 @@ interface WeatherData {
 type SelectableCity = FavoriteCity | RecentCity;
 
 function CityWeatherCard({ city, label }: { city: SelectableCity | null; label: string }) {
+  const { t } = useTranslation();
   const { data, loading } = useQuery<WeatherData>(GET_CURRENT_WEATHER, {
     variables: { lat: city?.lat, lon: city?.lon },
     skip: !city,
@@ -70,19 +71,19 @@ function CityWeatherCard({ city, label }: { city: SelectableCity | null; label: 
 
           <div className="grid grid-cols-2 gap-3 text-sm">
             <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
-              <p className="text-gray-500 dark:text-gray-400">Feels like</p>
+              <p className="text-gray-500 dark:text-gray-400">{t('weather.feelsLike')}</p>
               <p className="font-semibold dark:text-white">{Math.round(w.feels_like)}°C</p>
             </div>
             <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
-              <p className="text-gray-500 dark:text-gray-400">Humidity</p>
+              <p className="text-gray-500 dark:text-gray-400">{t('weather.humidity')}</p>
               <p className="font-semibold dark:text-white">{w.humidity}%</p>
             </div>
             <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
-              <p className="text-gray-500 dark:text-gray-400">Wind</p>
+              <p className="text-gray-500 dark:text-gray-400">{t('weather.wind')}</p>
               <p className="font-semibold dark:text-white">{Math.round(w.wind.speed)} m/s {getWindDirection(w.wind.deg)}</p>
             </div>
             <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
-              <p className="text-gray-500 dark:text-gray-400">Pressure</p>
+              <p className="text-gray-500 dark:text-gray-400">{t('weather.pressure')}</p>
               <p className="font-semibold dark:text-white">{w.pressure} hPa</p>
             </div>
           </div>
@@ -104,6 +105,7 @@ interface ForecastData {
 }
 
 function ComparisonChart({ cityA, cityB }: { cityA: SelectableCity | null; cityB: SelectableCity | null }) {
+  const { t, locale } = useTranslation();
   const { data: forecastA } = useQuery<ForecastData>(GET_FORECAST, {
     variables: { lat: cityA?.lat, lon: cityA?.lon },
     skip: !cityA,
@@ -141,11 +143,11 @@ function ComparisonChart({ cityA, cityB }: { cityA: SelectableCity | null; cityB
   const buildPath = (days: typeof daysA, accessor: (d: typeof daysA[0]) => number) =>
     days.map((d, i) => `${i === 0 ? 'M' : 'L'}${getX(i).toFixed(1)},${getY(accessor(d)).toFixed(1)}`).join(' ');
 
-  const formatDay = (dt: number) => new Date(dt * 1000).toLocaleDateString('en-US', { weekday: 'short' });
+  const formatDay = (dt: number) => new Date(dt * 1000).toLocaleDateString(locale, { weekday: 'short' });
 
   return (
     <div className="mt-6 bg-white dark:bg-gray-800 rounded-xl p-4 shadow-lg">
-      <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-3">5-Day Temperature Comparison</h3>
+      <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-3">{t('compare.5dayComparison')}</h3>
       <div className="flex items-center gap-4 mb-3 text-xs text-gray-500 dark:text-gray-400">
         {cityA && (
           <span className="flex items-center gap-1">
@@ -202,13 +204,14 @@ function ComparisonChart({ cityA, cityB }: { cityA: SelectableCity | null; cityB
           </>
         )}
       </svg>
-      <p className="text-xs text-gray-400 dark:text-gray-500 mt-2 text-center">Solid: High · Dashed: Low</p>
+      <p className="text-xs text-gray-400 dark:text-gray-500 mt-2 text-center">{t('compare.chartHighLow')}</p>
     </div>
   );
 }
 
 export default function WeatherCompare() {
   const { favoriteCities, recentCities } = useAuth();
+  const { t } = useTranslation();
   const [cityA, setCityA] = useState<SelectableCity | null>(null);
   const [cityB, setCityB] = useState<SelectableCity | null>(null);
 
@@ -226,7 +229,7 @@ export default function WeatherCompare() {
       }}
       className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white text-sm mb-4"
     >
-      <option value="">Choose a city...</option>
+      <option value="">{t('compare.chooseCity')}</option>
       {allCities.filter(c => c.id !== excludeId).map(c => (
         <option key={c.id} value={c.id}>{c.name}{c.country ? `, ${c.country}` : ''}</option>
       ))}
@@ -235,15 +238,15 @@ export default function WeatherCompare() {
 
   return (
     <div className="max-w-4xl mx-auto">
-      <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-6 text-center">Compare Weather</h2>
+      <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-6 text-center">{t('compare.title')}</h2>
 
       {allCities.length < 2 && (
         <div className="text-center py-8 bg-gray-50 dark:bg-gray-800 rounded-lg">
           <p className="text-gray-500 dark:text-gray-400">
-            You need at least 2 cities in your favorites or recent searches to compare weather.
+            {t('compare.needCities')}
           </p>
           <p className="text-sm text-gray-400 dark:text-gray-500 mt-2">
-            Search for cities and add them to your favorites first.
+            {t('compare.addCities')}
           </p>
         </div>
       )}
@@ -253,11 +256,11 @@ export default function WeatherCompare() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <CitySelector value={cityA} onChange={setCityA} excludeId={cityB?.id} />
-              <CityWeatherCard city={cityA} label="City A" />
+              <CityWeatherCard city={cityA} label={t('compare.cityA')} />
             </div>
             <div>
               <CitySelector value={cityB} onChange={setCityB} excludeId={cityA?.id} />
-              <CityWeatherCard city={cityB} label="City B" />
+              <CityWeatherCard city={cityB} label={t('compare.cityB')} />
             </div>
           </div>
 

@@ -63,7 +63,7 @@ describe('App Integration', () => {
     it('renders Use My Location button', async () => {
       renderApp('/');
 
-      expect(screen.getByText('Use My Location')).toBeInTheDocument();
+      expect(screen.getByText('Use my current location')).toBeInTheDocument();
     });
 
     it('loads city search micro frontend', async () => {
