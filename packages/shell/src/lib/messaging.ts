@@ -1,4 +1,5 @@
 import { getMessaging, getToken, onMessage, Messaging } from 'firebase/messaging';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 import { app } from './firebase';
 
 let messaging: Messaging | null = null;
@@ -57,4 +58,24 @@ export function onForegroundMessage(callback: (payload: { title?: string; body?:
       body: payload.notification?.body,
     });
   });
+}
+
+/**
+ * Subscribe an FCM token to weather alerts for given cities.
+ * Calls the `subscribeToAlerts` Cloud Function.
+ */
+export async function subscribeToWeatherAlerts(
+  token: string,
+  cities: Array<{ lat: number; lon: number; name: string }>
+): Promise<boolean> {
+  if (!app) return false;
+  try {
+    const functions = getFunctions(app);
+    const subscribeFn = httpsCallable(functions, 'subscribeToAlerts');
+    await subscribeFn({ token, cities });
+    return true;
+  } catch (err) {
+    console.error('Failed to subscribe to weather alerts:', err);
+    return false;
+  }
 }
