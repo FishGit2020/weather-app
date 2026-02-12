@@ -10,6 +10,7 @@ import HourlyChart from './HourlyChart';
 import WhatToWear from './WhatToWear';
 import SunriseSunset from './SunriseSunset';
 import WeatherMap from './WeatherMap';
+import DashboardSettings, { loadWidgetVisibility, WidgetVisibility } from './DashboardSettings';
 import './WeatherDisplay.css';
 
 export default function WeatherDisplay() {
@@ -39,6 +40,8 @@ export default function WeatherDisplay() {
     );
     return unsubscribe;
   }, []);
+
+  const [widgets, setWidgets] = useState<WidgetVisibility>(loadWidgetVisibility);
 
   const remoteConfig = useRemoteConfig();
   const useV1Layout = remoteConfig.new_exp === 'variant_a';
@@ -164,6 +167,7 @@ export default function WeatherDisplay() {
             </svg>
             {refreshing ? 'Refreshing...' : 'Refresh'}
           </button>
+          <DashboardSettings visibility={widgets} onChange={setWidgets} />
           {isLive && (
             <span className="inline-flex items-center px-2 py-1 bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 text-sm rounded">
               <span className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></span>
@@ -179,32 +183,38 @@ export default function WeatherDisplay() {
         </p>
       )}
 
-      {current && forecast && <WeatherAlerts current={current} forecast={forecast} />}
+      {widgets.weatherAlerts && current && forecast && <WeatherAlerts current={current} forecast={forecast} />}
 
-      {current && (useV1Layout ? <CurrentWeatherV1 data={current} /> : <CurrentWeather data={current} />)}
+      {widgets.currentWeather && current && (useV1Layout ? <CurrentWeatherV1 data={current} /> : <CurrentWeather data={current} />)}
 
-      {current && <SunriseSunset data={current} />}
+      {widgets.sunriseSunset && current && <SunriseSunset data={current} />}
 
-      {current && <WhatToWear data={current} />}
+      {widgets.whatToWear && current && <WhatToWear data={current} />}
 
-      {hourly && hourly.length > 0 && (
+      {hourly && hourly.length > 0 && (widgets.hourlyForecast || widgets.hourlyChart) && (
         <section>
-          <h3 className="text-xl font-semibold text-gray-800 dark:text-white mb-4">Hourly Forecast</h3>
-          <HourlyForecast data={hourly} />
-          <div className="mt-4">
-            <HourlyChart data={hourly} />
-          </div>
+          {widgets.hourlyForecast && (
+            <>
+              <h3 className="text-xl font-semibold text-gray-800 dark:text-white mb-4">Hourly Forecast</h3>
+              <HourlyForecast data={hourly} />
+            </>
+          )}
+          {widgets.hourlyChart && (
+            <div className={widgets.hourlyForecast ? 'mt-4' : ''}>
+              <HourlyChart data={hourly} />
+            </div>
+          )}
         </section>
       )}
 
-      {forecast && forecast.length > 0 && (
+      {widgets.forecast && forecast && forecast.length > 0 && (
         <section>
           <h3 className="text-xl font-semibold text-gray-800 dark:text-white mb-4">7-Day Forecast</h3>
           <Forecast data={forecast} />
         </section>
       )}
 
-      {location && <WeatherMap lat={location.lat} lon={location.lon} />}
+      {widgets.weatherMap && location && <WeatherMap lat={location.lat} lon={location.lon} />}
 
       <div className="mt-4 text-center text-sm text-gray-500 dark:text-gray-400">
         <span className="inline-flex items-center px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded">
