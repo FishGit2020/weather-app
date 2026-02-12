@@ -24,7 +24,7 @@ export default defineConfig({
         citySearch: citySearchRemote,
         weatherDisplay: weatherDisplayRemote
       },
-      shared: ['react', 'react-dom', 'react-router', '@apollo/client']
+      shared: ['react', 'react-dom', 'react-router', '@apollo/client', '@weather/shared']
     }),
     VitePWA({
       registerType: 'autoUpdate',
