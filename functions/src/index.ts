@@ -307,6 +307,7 @@ const stockCache = new NodeCache();
 export const stockProxy = onRequest(
   {
     cors: true,
+    invoker: 'public',
     maxInstances: 10,
     memory: '256MiB',
     timeoutSeconds: 30,
@@ -427,6 +428,7 @@ const aiChatCache = new NodeCache();
 export const aiChat = onRequest(
   {
     cors: true,
+    invoker: 'public',
     maxInstances: 5,
     memory: '256MiB',
     timeoutSeconds: 60,
@@ -712,6 +714,7 @@ async function executeGetStockQuote(symbol: string): Promise<string> {
 export const podcastProxy = onRequest(
   {
     cors: true,
+    invoker: 'public',
     maxInstances: 10,
     memory: '256MiB',
     timeoutSeconds: 30,
