@@ -43,26 +43,29 @@ describe('Layout', () => {
   it('renders header with app title', () => {
     renderWithRouter(<Layout />);
 
-    expect(screen.getByText('Weather Tracker')).toBeInTheDocument();
+    expect(screen.getByText('MyCircle')).toBeInTheDocument();
   });
 
-  it('renders MicroFE badge', () => {
+  it('renders navigation links for Weather, Stocks, Podcasts, Compare', () => {
     renderWithRouter(<Layout />);
 
-    expect(screen.getByText('MicroFE')).toBeInTheDocument();
-  });
-
-  it('renders Home navigation link', () => {
-    renderWithRouter(<Layout />);
-
-    const homeLinks = screen.getAllByText('Home');
-    expect(homeLinks.length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Weather').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Stocks').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Podcasts').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Compare').length).toBeGreaterThan(0);
   });
 
   it('renders footer with OpenWeatherMap attribution', () => {
     renderWithRouter(<Layout />);
 
     expect(screen.getByText('OpenWeatherMap')).toBeInTheDocument();
+  });
+
+  it('renders footer with Finnhub and PodcastIndex attribution', () => {
+    renderWithRouter(<Layout />);
+
+    expect(screen.getByText('Finnhub')).toBeInTheDocument();
+    expect(screen.getByText('PodcastIndex')).toBeInTheDocument();
   });
 
   it('renders footer with tech stack info', () => {
@@ -74,7 +77,7 @@ describe('Layout', () => {
   it('header logo links to home', () => {
     renderWithRouter(<Layout />);
 
-    const logoLink = screen.getByRole('link', { name: /Weather Tracker/i });
+    const logoLink = screen.getByRole('link', { name: /MyCircle/i });
     expect(logoLink).toHaveAttribute('href', '/');
   });
 
@@ -84,5 +87,11 @@ describe('Layout', () => {
     const owmLink = screen.getByRole('link', { name: 'OpenWeatherMap' });
     expect(owmLink).toHaveAttribute('target', '_blank');
     expect(owmLink).toHaveAttribute('rel', 'noopener noreferrer');
+  });
+
+  it('renders speed toggle button', () => {
+    renderWithRouter(<Layout />);
+
+    expect(screen.getAllByText('m/s').length).toBeGreaterThan(0);
   });
 });

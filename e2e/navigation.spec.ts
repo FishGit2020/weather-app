@@ -1,17 +1,17 @@
 import { test, expect } from './fixtures';
 
 test.describe('Navigation', () => {
-  test('Home link returns to homepage', async ({ page }) => {
+  test('Weather link returns to homepage', async ({ page }) => {
     await page.goto('/weather/51.5074,-0.1278?name=London');
-    await page.getByRole('link', { name: 'Home' }).click();
+    await page.getByRole('link', { name: 'Weather' }).first().click();
 
     await expect(page).toHaveURL('/');
-    await expect(page.getByRole('heading', { name: /Find Weather/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /Welcome to MyCircle/i })).toBeVisible();
   });
 
   test('Compare link navigates to compare page', async ({ page }) => {
     await page.goto('/');
-    await page.getByRole('link', { name: 'Compare' }).click();
+    await page.getByRole('link', { name: 'Compare' }).first().click();
 
     await expect(page).toHaveURL('/compare');
     await expect(page.getByRole('heading', { name: /Compare Weather/i })).toBeVisible();
@@ -19,7 +19,7 @@ test.describe('Navigation', () => {
 
   test('clicking app title navigates to home', async ({ page }) => {
     await page.goto('/compare');
-    await page.getByRole('link', { name: /weather tracker/i }).click();
+    await page.getByRole('link', { name: /mycircle/i }).click();
 
     await expect(page).toHaveURL('/');
   });
@@ -29,5 +29,19 @@ test.describe('Navigation', () => {
 
     await expect(page.getByText('404')).toBeVisible();
     await expect(page.getByText('Page not found')).toBeVisible();
+  });
+
+  test('Stocks link navigates to stocks page', async ({ page }) => {
+    await page.goto('/');
+    await page.getByRole('link', { name: 'Stocks' }).first().click();
+
+    await expect(page).toHaveURL('/stocks');
+  });
+
+  test('Podcasts link navigates to podcasts page', async ({ page }) => {
+    await page.goto('/');
+    await page.getByRole('link', { name: 'Podcasts' }).first().click();
+
+    await expect(page).toHaveURL('/podcasts');
   });
 });

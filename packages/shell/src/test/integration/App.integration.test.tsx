@@ -56,8 +56,8 @@ describe('App Integration', () => {
     it('renders the home page by default', async () => {
       renderApp('/');
 
-      expect(screen.getByText('Weather Tracker')).toBeInTheDocument();
-      expect(screen.getByText('Find Weather for Any City')).toBeInTheDocument();
+      expect(screen.getByText('MyCircle')).toBeInTheDocument();
+      expect(screen.getByText('Welcome to MyCircle')).toBeInTheDocument();
     });
 
     it('renders Use My Location button', async () => {
@@ -95,30 +95,37 @@ describe('App Integration', () => {
   });
 
   describe('Navigation', () => {
-    it('has working home link in header', () => {
+    it('has working weather link in header', () => {
       renderApp('/weather/51.5074,-0.1278');
 
-      const homeLink = screen.getAllByRole('link', { name: /home/i })[0];
-      expect(homeLink).toHaveAttribute('href', '/');
+      const weatherLinks = screen.getAllByText('Weather');
+      expect(weatherLinks.length).toBeGreaterThan(0);
     });
 
     it('has working logo link to home', () => {
       renderApp('/weather/51.5074,-0.1278');
 
-      const logoLink = screen.getByRole('link', { name: /Weather Tracker/i });
+      const logoLink = screen.getByRole('link', { name: /MyCircle/i });
       expect(logoLink).toHaveAttribute('href', '/');
+    });
+
+    it('has stocks and podcasts nav links', () => {
+      renderApp('/');
+
+      expect(screen.getAllByText('Stocks').length).toBeGreaterThan(0);
+      expect(screen.getAllByText('Podcasts').length).toBeGreaterThan(0);
     });
   });
 
   describe('Layout', () => {
     it('renders header on all pages', () => {
       renderApp('/');
-      expect(screen.getByText('Weather Tracker')).toBeInTheDocument();
+      expect(screen.getByText('MyCircle')).toBeInTheDocument();
 
       cleanup();
 
       renderApp('/weather/51.5074,-0.1278');
-      expect(screen.getByText('Weather Tracker')).toBeInTheDocument();
+      expect(screen.getByText('MyCircle')).toBeInTheDocument();
     });
 
     it('renders footer on all pages', () => {

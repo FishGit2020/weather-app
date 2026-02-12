@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery } from '@apollo/client/react';
-import { GET_CURRENT_WEATHER, GET_FORECAST, getWeatherIconUrl, getWindDirection, useTranslation } from '@weather/shared';
+import { GET_CURRENT_WEATHER, GET_FORECAST, getWeatherIconUrl, getWindDirection, useTranslation, useUnits, formatTemperature, formatWindSpeed, convertTemp, tempUnitSymbol } from '@weather/shared';
 import { useAuth } from '../context/AuthContext';
 import { FavoriteCity, RecentCity } from '../lib/firebase';
 
@@ -20,6 +20,7 @@ type SelectableCity = FavoriteCity | RecentCity;
 
 function CityWeatherCard({ city, label }: { city: SelectableCity | null; label: string }) {
   const { t } = useTranslation();
+  const { tempUnit, speedUnit } = useUnits();
   const { data, loading } = useQuery<WeatherData>(GET_CURRENT_WEATHER, {
     variables: { lat: city?.lat, lon: city?.lon },
     skip: !city,
@@ -29,7 +30,7 @@ function CityWeatherCard({ city, label }: { city: SelectableCity | null; label: 
   if (!city) {
     return (
       <div className="flex-1 bg-gray-50 dark:bg-gray-800 rounded-xl p-6 border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center min-h-[200px]">
-        <p className="text-gray-400 dark:text-gray-500 text-center">Select {label}</p>
+        <p className="text-gray-400 dark:text-gray-500 text-center">{t('compare.selectCity')} {label}</p>
       </div>
     );
   }
@@ -64,7 +65,7 @@ function CityWeatherCard({ city, label }: { city: SelectableCity | null; label: 
               <img src={getWeatherIconUrl(w.weather[0].icon)} alt={w.weather[0].main} className="w-16 h-16" />
             )}
             <div>
-              <p className="text-4xl font-bold text-gray-800 dark:text-white">{Math.round(w.temp)}°C</p>
+              <p className="text-4xl font-bold text-gray-800 dark:text-white">{formatTemperature(w.temp, tempUnit)}</p>
               <p className="text-sm text-gray-500 dark:text-gray-400 capitalize">{w.weather[0]?.description}</p>
             </div>
           </div>
@@ -72,7 +73,7 @@ function CityWeatherCard({ city, label }: { city: SelectableCity | null; label: 
           <div className="grid grid-cols-2 gap-3 text-sm">
             <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
               <p className="text-gray-500 dark:text-gray-400">{t('weather.feelsLike')}</p>
-              <p className="font-semibold dark:text-white">{Math.round(w.feels_like)}°C</p>
+              <p className="font-semibold dark:text-white">{formatTemperature(w.feels_like, tempUnit)}</p>
             </div>
             <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
               <p className="text-gray-500 dark:text-gray-400">{t('weather.humidity')}</p>
@@ -80,7 +81,7 @@ function CityWeatherCard({ city, label }: { city: SelectableCity | null; label: 
             </div>
             <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
               <p className="text-gray-500 dark:text-gray-400">{t('weather.wind')}</p>
-              <p className="font-semibold dark:text-white">{Math.round(w.wind.speed)} m/s {getWindDirection(w.wind.deg)}</p>
+              <p className="font-semibold dark:text-white">{formatWindSpeed(w.wind.speed, speedUnit)} {getWindDirection(w.wind.deg)}</p>
             </div>
             <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
               <p className="text-gray-500 dark:text-gray-400">{t('weather.pressure')}</p>
@@ -106,6 +107,7 @@ interface ForecastData {
 
 function ComparisonChart({ cityA, cityB }: { cityA: SelectableCity | null; cityB: SelectableCity | null }) {
   const { t, locale } = useTranslation();
+  const { tempUnit } = useUnits();
   const { data: forecastA } = useQuery<ForecastData>(GET_FORECAST, {
     variables: { lat: cityA?.lat, lon: cityA?.lon },
     skip: !cityA,
@@ -123,8 +125,8 @@ function ComparisonChart({ cityA, cityB }: { cityA: SelectableCity | null; cityB
   if (daysA.length === 0 && daysB.length === 0) return null;
 
   const allTemps = [
-    ...daysA.flatMap(d => [d.temp.min, d.temp.max]),
-    ...daysB.flatMap(d => [d.temp.min, d.temp.max]),
+    ...daysA.flatMap(d => [convertTemp(d.temp.min, tempUnit), convertTemp(d.temp.max, tempUnit)]),
+    ...daysB.flatMap(d => [convertTemp(d.temp.min, tempUnit), convertTemp(d.temp.max, tempUnit)]),
   ];
   const minTemp = Math.floor(Math.min(...allTemps) - 2);
   const maxTemp = Math.ceil(Math.max(...allTemps) + 2);
@@ -141,7 +143,7 @@ function ComparisonChart({ cityA, cityB }: { cityA: SelectableCity | null; cityB
   const getY = (temp: number) => pad.top + (1 - (temp - minTemp) / tempRange) * plotH;
 
   const buildPath = (days: typeof daysA, accessor: (d: typeof daysA[0]) => number) =>
-    days.map((d, i) => `${i === 0 ? 'M' : 'L'}${getX(i).toFixed(1)},${getY(accessor(d)).toFixed(1)}`).join(' ');
+    days.map((d, i) => `${i === 0 ? 'M' : 'L'}${getX(i).toFixed(1)},${getY(convertTemp(accessor(d), tempUnit)).toFixed(1)}`).join(' ');
 
   const formatDay = (dt: number) => new Date(dt * 1000).toLocaleDateString(locale, { weekday: 'short' });
 
@@ -169,7 +171,7 @@ function ComparisonChart({ cityA, cityB }: { cityA: SelectableCity | null; cityB
             <g key={`grid-${i}`}>
               <line x1={pad.left} y1={y} x2={chartWidth - pad.right} y2={y} className="stroke-gray-200 dark:stroke-gray-700" strokeWidth={0.5} />
               <text x={pad.left - 5} y={y + 3} textAnchor="end" className="fill-gray-400 dark:fill-gray-500" fontSize={9}>
-                {Math.round(temp)}°
+                {Math.round(temp)}{tempUnitSymbol(tempUnit)}
               </text>
             </g>
           );
@@ -188,7 +190,7 @@ function ComparisonChart({ cityA, cityB }: { cityA: SelectableCity | null; cityB
             <path d={buildPath(daysA, d => d.temp.max)} fill="none" className="stroke-blue-500" strokeWidth={2} strokeLinejoin="round" />
             <path d={buildPath(daysA, d => d.temp.min)} fill="none" className="stroke-blue-300" strokeWidth={1.5} strokeDasharray="4 2" strokeLinejoin="round" />
             {daysA.map((d, i) => (
-              <circle key={`a-${i}`} cx={getX(i)} cy={getY(d.temp.max)} r={3} className="fill-blue-500" />
+              <circle key={`a-${i}`} cx={getX(i)} cy={getY(convertTemp(d.temp.max, tempUnit))} r={3} className="fill-blue-500" />
             ))}
           </>
         )}
@@ -199,7 +201,7 @@ function ComparisonChart({ cityA, cityB }: { cityA: SelectableCity | null; cityB
             <path d={buildPath(daysB, d => d.temp.max)} fill="none" className="stroke-orange-500" strokeWidth={2} strokeLinejoin="round" />
             <path d={buildPath(daysB, d => d.temp.min)} fill="none" className="stroke-orange-300" strokeWidth={1.5} strokeDasharray="4 2" strokeLinejoin="round" />
             {daysB.map((d, i) => (
-              <circle key={`b-${i}`} cx={getX(i)} cy={getY(d.temp.max)} r={3} className="fill-orange-500" />
+              <circle key={`b-${i}`} cx={getX(i)} cy={getY(convertTemp(d.temp.max, tempUnit))} r={3} className="fill-orange-500" />
             ))}
           </>
         )}

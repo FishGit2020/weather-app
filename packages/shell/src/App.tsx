@@ -198,6 +198,27 @@ function WeatherPage() {
   );
 }
 
+// Placeholder pages for upcoming MFEs
+function StocksPage() {
+  const { t } = useTranslation();
+  return (
+    <div className="text-center py-16">
+      <h2 className="text-3xl font-bold text-gray-800 dark:text-white mb-4">{t('stocks.title')}</h2>
+      <p className="text-gray-600 dark:text-gray-400">{t('stocks.loading')}</p>
+    </div>
+  );
+}
+
+function PodcastsPage() {
+  const { t } = useTranslation();
+  return (
+    <div className="text-center py-16">
+      <h2 className="text-3xl font-bold text-gray-800 dark:text-white mb-4">{t('podcasts.title')}</h2>
+      <p className="text-gray-600 dark:text-gray-400">{t('podcasts.loading')}</p>
+    </div>
+  );
+}
+
 // 404 Not Found
 function NotFound() {
   const { t } = useTranslation();
@@ -215,6 +236,8 @@ export default function App() {
       <Route path="/" element={<Layout />}>
         <Route index element={<HomePage />} />
         <Route path="weather/:coords" element={<WeatherPage />} />
+        <Route path="stocks" element={<StocksPage />} />
+        <Route path="podcasts" element={<PodcastsPage />} />
         <Route path="compare" element={<WeatherCompare />} />
         <Route path="*" element={<NotFound />} />
       </Route>

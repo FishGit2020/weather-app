@@ -30,9 +30,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'icons/*.png'],
       manifest: {
-        name: 'Weather Tracker',
-        short_name: 'Weather',
-        description: 'Track weather conditions for cities around the world',
+        name: 'MyCircle',
+        short_name: 'MyCircle',
+        description: 'Your personal dashboard for weather, stocks, podcasts, and more',
         theme_color: '#3b82f6',
         background_color: '#1e293b',
         display: 'standalone',
