@@ -8,6 +8,7 @@ import axios from 'axios';
 import NodeCache from 'node-cache';
 import crypto from 'crypto';
 import { verifyRecaptchaToken } from './recaptcha.js';
+import type { FunctionDeclaration } from '@google/genai';
 
 // Initialize Firebase Admin (idempotent)
 if (getApps().length === 0) {
@@ -414,6 +415,300 @@ function getPodcastIndexHeaders(apiKey: string, apiSecret: string): Record<strin
  *   GET /podcast/trending
  *   GET /podcast/episodes?feedId=...
  */
+// ─── AI Chat (Gemini) ──────────────────────────────────────────────
+
+const aiChatCache = new NodeCache();
+
+/**
+ * AI Chat endpoint using Google Gemini with function calling.
+ * POST /ai/chat — Body: { message: string, history: { role: string, content: string }[] }
+ * Returns: { response: string, toolCalls?: { name: string, args: object, result?: string }[] }
+ */
+export const aiChat = onRequest(
+  {
+    cors: true,
+    maxInstances: 5,
+    memory: '256MiB',
+    timeoutSeconds: 60,
+    secrets: ['GEMINI_API_KEY', 'OPENWEATHER_API_KEY', 'FINNHUB_API_KEY'],
+  },
+  async (req: Request, res: Response) => {
+    if (req.method !== 'POST') {
+      res.status(405).json({ error: 'Method not allowed' });
+      return;
+    }
+
+    const geminiKey = process.env.GEMINI_API_KEY;
+    if (!geminiKey) {
+      res.status(500).json({ error: 'GEMINI_API_KEY not configured' });
+      return;
+    }
+
+    const { message, history } = req.body as {
+      message: string;
+      history?: { role: string; content: string }[];
+    };
+
+    if (!message || typeof message !== 'string') {
+      res.status(400).json({ error: 'message is required' });
+      return;
+    }
+
+    try {
+      // Dynamically import the Google Gen AI SDK
+      const { GoogleGenAI, Type } = await import('@google/genai');
+      const ai = new GoogleGenAI({ apiKey: geminiKey });
+
+      // Define tools for function calling
+      const getWeatherDecl: FunctionDeclaration = {
+        name: 'getWeather',
+        description: 'Get current weather for a city. Returns temperature, conditions, humidity, and wind.',
+        parameters: {
+          type: Type.OBJECT,
+          properties: {
+            city: { type: Type.STRING, description: 'City name (e.g., "Tokyo", "New York")' },
+          },
+          required: ['city'],
+        },
+      };
+
+      const searchCitiesDecl: FunctionDeclaration = {
+        name: 'searchCities',
+        description: 'Search for cities by name. Returns matching city names with coordinates.',
+        parameters: {
+          type: Type.OBJECT,
+          properties: {
+            query: { type: Type.STRING, description: 'Search query for city name' },
+          },
+          required: ['query'],
+        },
+      };
+
+      const getStockQuoteDecl: FunctionDeclaration = {
+        name: 'getStockQuote',
+        description: 'Get the current stock price and daily change for a stock symbol.',
+        parameters: {
+          type: Type.OBJECT,
+          properties: {
+            symbol: { type: Type.STRING, description: 'Stock ticker symbol (e.g., "AAPL", "GOOGL")' },
+          },
+          required: ['symbol'],
+        },
+      };
+
+      const navigateToDecl: FunctionDeclaration = {
+        name: 'navigateTo',
+        description: 'Navigate the user to a specific page in the MyCircle app. Available pages: weather (home), stocks, podcasts, compare.',
+        parameters: {
+          type: Type.OBJECT,
+          properties: {
+            page: { type: Type.STRING, description: 'Page to navigate to: "weather", "stocks", "podcasts", "compare"' },
+          },
+          required: ['page'],
+        },
+      };
+
+      const tools = [
+        { functionDeclarations: [getWeatherDecl, searchCitiesDecl, getStockQuoteDecl, navigateToDecl] },
+      ];
+
+      // Build conversation history
+      const contents: Array<{ role: string; parts: Array<{ text: string }> }> = [];
+      if (history && Array.isArray(history)) {
+        for (const msg of history) {
+          contents.push({
+            role: msg.role === 'assistant' ? 'model' : 'user',
+            parts: [{ text: msg.content }],
+          });
+        }
+      }
+      contents.push({ role: 'user', parts: [{ text: message }] });
+
+      // Call Gemini
+      const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents,
+        config: {
+          tools,
+          systemInstruction: 'You are MyCircle AI, a helpful assistant for the MyCircle personal dashboard app. You can look up weather, stock quotes, search for cities, and navigate users around the app. Be concise and helpful. When users ask about weather or stocks, use the tools to get real data.',
+        },
+      });
+
+      // Process function calls if any
+      const toolCalls: Array<{ name: string; args: Record<string, unknown>; result?: string }> = [];
+      const candidate = response.candidates?.[0];
+      const parts = candidate?.content?.parts || [];
+
+      let hasToolCalls = false;
+      for (const part of parts) {
+        if (part.functionCall) {
+          hasToolCalls = true;
+          const fc = part.functionCall;
+          const args = (fc.args || {}) as Record<string, unknown>;
+          let result = '';
+
+          // Execute tool
+          try {
+            if (fc.name === 'getWeather') {
+              result = await executeGetWeather(args.city as string);
+            } else if (fc.name === 'searchCities') {
+              result = await executeSearchCities(args.query as string);
+            } else if (fc.name === 'getStockQuote') {
+              result = await executeGetStockQuote(args.symbol as string);
+            } else if (fc.name === 'navigateTo') {
+              result = JSON.stringify({ navigateTo: args.page });
+            }
+          } catch (err: any) {
+            result = JSON.stringify({ error: err.message });
+          }
+
+          toolCalls.push({ name: fc.name!, args, result });
+        }
+      }
+
+      // If we had tool calls, send results back to Gemini for a final response
+      if (hasToolCalls && toolCalls.length > 0) {
+        const toolResponseParts = toolCalls.map(tc => ({
+          functionResponse: {
+            name: tc.name,
+            response: { result: tc.result },
+          },
+        }));
+
+        // Add the assistant's function call parts and our tool responses
+        const followupContents = [
+          ...contents,
+          { role: 'model', parts },
+          { role: 'user', parts: toolResponseParts },
+        ];
+
+        const followup = await ai.models.generateContent({
+          model: 'gemini-2.5-flash',
+          contents: followupContents,
+          config: {
+            systemInstruction: 'You are MyCircle AI, a helpful assistant for the MyCircle personal dashboard app. Summarize the tool results in a natural, helpful way. Be concise.',
+          },
+        });
+
+        const finalText = followup.text || 'I found some information but had trouble formatting it.';
+        res.status(200).json({ response: finalText, toolCalls });
+        return;
+      }
+
+      // No tool calls — return direct text response
+      const text = response.text || 'Sorry, I could not generate a response.';
+      res.status(200).json({ response: text });
+    } catch (err: any) {
+      console.error('AI Chat error:', err);
+      if (err.status === 429) {
+        res.status(429).json({ error: 'Rate limit exceeded. Please try again in a moment.' });
+        return;
+      }
+      res.status(500).json({ error: err.message || 'Failed to generate response' });
+    }
+  }
+);
+
+/**
+ * Execute getWeather tool: fetch current weather from OpenWeather API
+ */
+async function executeGetWeather(city: string): Promise<string> {
+  const apiKey = process.env.OPENWEATHER_API_KEY;
+  if (!apiKey) return JSON.stringify({ error: 'Weather API not configured' });
+
+  // Check cache
+  const cacheKey = `ai:weather:${city.toLowerCase()}`;
+  const cached = aiChatCache.get<string>(cacheKey);
+  if (cached) return cached;
+
+  // First geocode the city
+  const geoRes = await axios.get(
+    `https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(city)}&limit=1&appid=${apiKey}`,
+    { timeout: 5000 }
+  );
+
+  if (!geoRes.data || geoRes.data.length === 0) {
+    return JSON.stringify({ error: `City "${city}" not found` });
+  }
+
+  const { lat, lon, name, country } = geoRes.data[0];
+
+  // Get weather
+  const weatherRes = await axios.get(
+    `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric`,
+    { timeout: 5000 }
+  );
+
+  const w = weatherRes.data;
+  const result = JSON.stringify({
+    city: name,
+    country,
+    temp: Math.round(w.main.temp),
+    feelsLike: Math.round(w.main.feels_like),
+    description: w.weather[0].description,
+    humidity: w.main.humidity,
+    windSpeed: w.wind.speed,
+    icon: w.weather[0].icon,
+  });
+
+  aiChatCache.set(cacheKey, result, 300); // cache 5 min
+  return result;
+}
+
+/**
+ * Execute searchCities tool: geocode search via OpenWeather API
+ */
+async function executeSearchCities(query: string): Promise<string> {
+  const apiKey = process.env.OPENWEATHER_API_KEY;
+  if (!apiKey) return JSON.stringify({ error: 'Weather API not configured' });
+
+  const res = await axios.get(
+    `https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(query)}&limit=5&appid=${apiKey}`,
+    { timeout: 5000 }
+  );
+
+  return JSON.stringify(
+    res.data.map((c: any) => ({
+      name: c.name,
+      country: c.country,
+      state: c.state || '',
+      lat: c.lat,
+      lon: c.lon,
+    }))
+  );
+}
+
+/**
+ * Execute getStockQuote tool: fetch stock price from Finnhub API
+ */
+async function executeGetStockQuote(symbol: string): Promise<string> {
+  const apiKey = process.env.FINNHUB_API_KEY;
+  if (!apiKey) return JSON.stringify({ error: 'Stock API not configured' });
+
+  const cacheKey = `ai:stock:${symbol.toUpperCase()}`;
+  const cached = aiChatCache.get<string>(cacheKey);
+  if (cached) return cached;
+
+  const res = await axios.get(
+    `https://finnhub.io/api/v1/quote?symbol=${encodeURIComponent(symbol.toUpperCase())}`,
+    { headers: { 'X-Finnhub-Token': apiKey }, timeout: 5000 }
+  );
+
+  const result = JSON.stringify({
+    symbol: symbol.toUpperCase(),
+    price: res.data.c,
+    change: res.data.d,
+    changePercent: res.data.dp,
+    high: res.data.h,
+    low: res.data.l,
+    open: res.data.o,
+    previousClose: res.data.pc,
+  });
+
+  aiChatCache.set(cacheKey, result, 60); // cache 1 min
+  return result;
+}
+
 export const podcastProxy = onRequest(
   {
     cors: true,

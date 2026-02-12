@@ -20,6 +20,10 @@
         "function": "podcastProxy"
       },
       {
+        "source": "/ai/**",
+        "function": "aiChat"
+      },
+      {
         "source": "/city-search/**",
         "destination": "/city-search/index.html"
       },
@@ -34,6 +38,10 @@
       {
         "source": "/podcast-player/**",
         "destination": "/podcast-player/index.html"
+      },
+      {
+        "source": "/ai-assistant/**",
+        "destination": "/ai-assistant/index.html"
       },
       {
         "source": "**",

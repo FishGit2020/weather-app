@@ -6,4 +6,5 @@ export default defineWorkspace([
   'packages/weather-display/vitest.config.ts',
   'packages/stock-tracker/vitest.config.ts',
   'packages/podcast-player/vitest.config.ts',
+  'packages/ai-assistant/vitest.config.ts',
 ])

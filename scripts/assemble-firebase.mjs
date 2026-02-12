@@ -71,6 +71,12 @@ const podcastPlayerDest = path.join(firebaseDir, 'podcast-player');
 console.log(`Copying podcast-player to ${podcastPlayerDest}`);
 copyDir(podcastPlayerDist, podcastPlayerDest);
 
+// 6. Copy ai-assistant MF to /ai-assistant
+const aiAssistantDist = path.join(rootDir, 'packages', 'ai-assistant', 'dist');
+const aiAssistantDest = path.join(firebaseDir, 'ai-assistant');
+console.log(`Copying ai-assistant to ${aiAssistantDest}`);
+copyDir(aiAssistantDist, aiAssistantDest);
+
 console.log('\nFirebase deployment directory assembled successfully!');
 console.log(`Output: ${firebaseDir}`);
 

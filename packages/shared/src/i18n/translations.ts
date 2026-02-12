@@ -8,6 +8,7 @@ const en = {
   'nav.weather': 'Weather',
   'nav.stocks': 'Stocks',
   'nav.podcasts': 'Podcasts',
+  'nav.ai': 'AI',
   'nav.compare': 'Compare',
   'nav.skipToContent': 'Skip to content',
 
@@ -275,6 +276,27 @@ const en = {
   'podcasts.skipBack': 'Skip back 15s',
   'podcasts.nowPlaying': 'Now Playing',
   'podcasts.episodeCount': '{count} episodes',
+
+  // AI Assistant
+  'ai.title': 'AI Assistant',
+  'ai.subtitle': 'Ask about weather, stocks, or navigate the app',
+  'ai.inputPlaceholder': 'Ask me about weather, stocks, or anything...',
+  'ai.send': 'Send message',
+  'ai.thinking': 'Thinking...',
+  'ai.clearChat': 'Clear chat',
+  'ai.chatMessages': 'Chat messages',
+  'ai.you': 'You',
+  'ai.assistant': 'AI',
+  'ai.emptyTitle': 'Start a conversation',
+  'ai.emptyHint': 'Ask about the weather in any city, stock prices, or let me help you navigate.',
+  'ai.toolsUsed': 'Tools used',
+  'ai.toolWeather': 'Weather lookup',
+  'ai.toolCitySearch': 'City search',
+  'ai.toolStockQuote': 'Stock quote',
+  'ai.toolNavigate': 'Navigation',
+  'ai.toolGeneric': 'Tool',
+  'ai.error': 'Failed to get response',
+  'ai.rateLimited': 'Rate limited. Please wait a moment.',
 } as const;
 
 const es: Record<TranslationKey, string> = {
@@ -283,6 +305,7 @@ const es: Record<TranslationKey, string> = {
   'nav.weather': 'Clima',
   'nav.stocks': 'Acciones',
   'nav.podcasts': 'Podcasts',
+  'nav.ai': 'IA',
   'nav.compare': 'Comparar',
   'nav.skipToContent': 'Saltar al contenido',
 
@@ -550,6 +573,27 @@ const es: Record<TranslationKey, string> = {
   'podcasts.skipBack': 'Retroceder 15s',
   'podcasts.nowPlaying': 'Reproduciendo',
   'podcasts.episodeCount': '{count} episodios',
+
+  // AI Assistant
+  'ai.title': 'Asistente IA',
+  'ai.subtitle': 'Pregunta sobre clima, acciones o navega la app',
+  'ai.inputPlaceholder': 'Preg\u00fantame sobre clima, acciones o lo que sea...',
+  'ai.send': 'Enviar mensaje',
+  'ai.thinking': 'Pensando...',
+  'ai.clearChat': 'Limpiar chat',
+  'ai.chatMessages': 'Mensajes del chat',
+  'ai.you': 'T\u00fa',
+  'ai.assistant': 'IA',
+  'ai.emptyTitle': 'Inicia una conversaci\u00f3n',
+  'ai.emptyHint': 'Pregunta sobre el clima de cualquier ciudad, precios de acciones, o d\u00e9jame ayudarte a navegar.',
+  'ai.toolsUsed': 'Herramientas usadas',
+  'ai.toolWeather': 'Consulta de clima',
+  'ai.toolCitySearch': 'B\u00fasqueda de ciudades',
+  'ai.toolStockQuote': 'Cotizaci\u00f3n de acci\u00f3n',
+  'ai.toolNavigate': 'Navegaci\u00f3n',
+  'ai.toolGeneric': 'Herramienta',
+  'ai.error': 'No se pudo obtener respuesta',
+  'ai.rateLimited': 'L\u00edmite de velocidad. Espera un momento.',
 };
 
 export const translations: Record<Locale, Record<TranslationKey, string>> = {

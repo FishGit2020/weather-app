@@ -23,6 +23,10 @@ const podcastPlayerRemote = isProduction
   ? '/podcast-player/assets/remoteEntry.js'
   : 'http://localhost:3006/assets/remoteEntry.js';
 
+const aiAssistantRemote = isProduction
+  ? '/ai-assistant/assets/remoteEntry.js'
+  : 'http://localhost:3007/assets/remoteEntry.js';
+
 export default defineConfig({
   plugins: [
     react(),
@@ -32,7 +36,8 @@ export default defineConfig({
         citySearch: citySearchRemote,
         weatherDisplay: weatherDisplayRemote,
         stockTracker: stockTrackerRemote,
-        podcastPlayer: podcastPlayerRemote
+        podcastPlayer: podcastPlayerRemote,
+        aiAssistant: aiAssistantRemote
       },
       shared: ['react', 'react-dom', 'react-router', '@apollo/client', 'graphql', '@weather/shared']
     }),
@@ -76,6 +81,7 @@ export default defineConfig({
           /^\/graphql/,
           /^\/stock\//,
           /^\/podcast\//,
+          /^\/ai\//,
           /^\/api\//,
         ],
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],

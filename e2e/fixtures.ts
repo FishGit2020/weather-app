@@ -326,12 +326,38 @@ export async function mockGraphQL(page: Page) {
   });
 }
 
+// ─── AI Chat mock data ───────────────────────────────────────────
+
+export const mockAiChatResponse = {
+  response: 'The weather in Tokyo is currently 22°C with clear skies.',
+  toolCalls: [
+    { name: 'getWeather', args: { city: 'Tokyo' }, result: '{"city":"Tokyo","temp":22,"description":"clear sky"}' },
+  ],
+};
+
+/**
+ * Intercept AI Chat API requests and return mock data.
+ */
+export async function mockAiChatAPI(page: Page) {
+  await page.route('**/ai/chat', async (route) => {
+    if (route.request().method() !== 'POST') {
+      return route.continue();
+    }
+    return route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(mockAiChatResponse),
+    });
+  });
+}
+
 /** Extended test fixture that sets up all API mocks for every test. */
 export const test = base.extend<{ mockApi: void }>({
   mockApi: [async ({ page }, use) => {
     await mockGraphQL(page);
     await mockStockAPI(page);
     await mockPodcastAPI(page);
+    await mockAiChatAPI(page);
     await use();
   }, { auto: true }],
 });

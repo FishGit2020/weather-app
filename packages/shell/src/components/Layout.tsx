@@ -89,6 +89,9 @@ export default function Layout() {
               <Link to="/podcasts" className={navLinkClass('/podcasts')}>
                 {t('nav.podcasts')}
               </Link>
+              <Link to="/ai" className={navLinkClass('/ai')}>
+                {t('nav.ai')}
+              </Link>
               <Link to="/compare" className={navLinkClass('/compare')}>
                 {t('nav.compare')}
               </Link>
@@ -137,6 +140,9 @@ export default function Layout() {
               </Link>
               <Link to="/podcasts" className={mobileNavLinkClass('/podcasts')}>
                 {t('nav.podcasts')}
+              </Link>
+              <Link to="/ai" className={mobileNavLinkClass('/ai')}>
+                {t('nav.ai')}
               </Link>
               <Link to="/compare" className={mobileNavLinkClass('/compare')}>
                 {t('nav.compare')}
