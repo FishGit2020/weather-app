@@ -43,6 +43,150 @@ export const mockSearchCities = [
   { id: '51.5,-0.08', name: 'London Bridge', country: 'GB', state: 'England', lat: 51.5, lon: -0.08 },
 ];
 
+// ─── Stock mock data (Finnhub-shaped) ─────────────────────────────
+
+export const mockStockSearchResults = {
+  count: 2,
+  result: [
+    { description: 'Apple Inc', displaySymbol: 'AAPL', symbol: 'AAPL', type: 'Common Stock' },
+    { description: 'Amazon.com Inc', displaySymbol: 'AMZN', symbol: 'AMZN', type: 'Common Stock' },
+  ],
+};
+
+export const mockStockQuote = {
+  c: 185.92,   // current
+  d: 2.45,     // change
+  dp: 1.34,    // percent change
+  h: 187.00,   // high
+  l: 183.50,   // low
+  o: 184.00,   // open
+  pc: 183.47,  // prev close
+  t: now,
+};
+
+export const mockStockCandles = {
+  c: Array.from({ length: 30 }, (_, i) => 180 + Math.sin(i / 5) * 5),
+  h: Array.from({ length: 30 }, (_, i) => 182 + Math.sin(i / 5) * 5),
+  l: Array.from({ length: 30 }, (_, i) => 178 + Math.sin(i / 5) * 5),
+  o: Array.from({ length: 30 }, (_, i) => 179 + Math.sin(i / 5) * 5),
+  t: Array.from({ length: 30 }, (_, i) => now - (30 - i) * 86400),
+  v: Array.from({ length: 30 }, () => Math.floor(Math.random() * 1000000)),
+  s: 'ok',
+};
+
+// ─── Podcast mock data (PodcastIndex-shaped) ──────────────────────
+
+export const mockPodcastSearch = {
+  feeds: [
+    {
+      id: 101,
+      title: 'Tech Talk Daily',
+      author: 'John Smith',
+      artwork: 'https://example.com/tech-talk.jpg',
+      description: 'A daily podcast about technology news and trends.',
+      feedUrl: 'https://example.com/feed.xml',
+      episodeCount: 150,
+      categories: { '1': 'Technology' },
+    },
+    {
+      id: 102,
+      title: 'Science Weekly',
+      author: 'Jane Doe',
+      artwork: 'https://example.com/science.jpg',
+      description: 'Weekly discussions on scientific discoveries.',
+      feedUrl: 'https://example.com/science.xml',
+      episodeCount: 80,
+      categories: { '2': 'Science' },
+    },
+  ],
+  count: 2,
+};
+
+export const mockTrendingPodcasts = {
+  feeds: Array.from({ length: 10 }, (_, i) => ({
+    id: 200 + i,
+    title: `Trending Show ${i + 1}`,
+    author: `Host ${i + 1}`,
+    artwork: `https://example.com/trending-${i}.jpg`,
+    description: `Description for trending show ${i + 1}.`,
+    feedUrl: `https://example.com/trending-${i}.xml`,
+    episodeCount: 20 + i * 5,
+    categories: { '1': 'General' },
+  })),
+};
+
+export const mockPodcastEpisodes = {
+  items: Array.from({ length: 5 }, (_, i) => ({
+    id: 1000 + i,
+    title: `Episode ${i + 1}: Great Content`,
+    description: `Description for episode ${i + 1}.`,
+    datePublished: now - i * 86400 * 7,
+    duration: 1800 + i * 600,
+    enclosureUrl: `https://example.com/ep${i + 1}.mp3`,
+    enclosureType: 'audio/mpeg',
+    image: `https://example.com/ep${i + 1}.jpg`,
+    feedId: 101,
+  })),
+};
+
+/**
+ * Intercept Stock API requests and return mock data.
+ */
+export async function mockStockAPI(page: Page) {
+  await page.route('**/stock/search**', async (route) => {
+    return route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(mockStockSearchResults),
+    });
+  });
+
+  await page.route('**/stock/quote**', async (route) => {
+    return route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(mockStockQuote),
+    });
+  });
+
+  await page.route('**/stock/candles**', async (route) => {
+    return route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(mockStockCandles),
+    });
+  });
+}
+
+/**
+ * Intercept Podcast API requests and return mock data.
+ */
+export async function mockPodcastAPI(page: Page) {
+  await page.route('**/podcast/search**', async (route) => {
+    return route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(mockPodcastSearch),
+    });
+  });
+
+  await page.route('**/podcast/trending**', async (route) => {
+    return route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(mockTrendingPodcasts),
+    });
+  });
+
+  await page.route('**/podcast/episodes**', async (route) => {
+    return route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(mockPodcastEpisodes),
+    });
+  });
+}
+
 /**
  * Intercept GraphQL requests and return mock data so e2e tests
  * don't depend on a live OpenWeather API key.
@@ -118,10 +262,12 @@ export async function mockGraphQL(page: Page) {
   });
 }
 
-/** Extended test fixture that sets up GraphQL mocks for every test. */
+/** Extended test fixture that sets up all API mocks for every test. */
 export const test = base.extend<{ mockApi: void }>({
   mockApi: [async ({ page }, use) => {
     await mockGraphQL(page);
+    await mockStockAPI(page);
+    await mockPodcastAPI(page);
     await use();
   }, { auto: true }],
 });
