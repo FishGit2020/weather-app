@@ -166,6 +166,7 @@ export default function CitySearch({ onCitySelect, recentCities = [], onRemoveCi
 
   // Derive dropdown visibility from current state
   const showSearchResults = results.length > 0 && !loading;
+  const showNoResults = query.length >= 2 && !loading && results.length === 0 && data?.searchCities !== undefined;
   const showDropdown = inputFocused && query.length < 2 && !loading && results.length === 0;
   const isShowingRecent = recentCities.length > 0;
   const dropdownCities = isShowingRecent ? recentCities.slice(0, 5) : POPULAR_CITIES;
@@ -255,6 +256,7 @@ export default function CitySearch({ onCitySelect, recentCities = [], onRemoveCi
             placeholder="Search for a city..."
             className="w-full px-4 py-3 pr-10 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-lg"
             role="combobox"
+            aria-label="Search for a city"
             aria-expanded={visibleItems.length > 0 || showDropdown}
             aria-activedescendant={highlightedIndex >= 0 ? `city-option-${highlightedIndex}` : undefined}
           />
@@ -311,6 +313,16 @@ export default function CitySearch({ onCitySelect, recentCities = [], onRemoveCi
                 <WeatherPreview lat={city.lat} lon={city.lon} />
               </button>
             ))}
+          </div>
+        )}
+
+        {showNoResults && (
+          <div className="absolute top-full mt-2 w-full bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden z-10 px-4 py-6 text-center">
+            <svg className="w-10 h-10 mx-auto mb-2 text-gray-300 dark:text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <p className="text-gray-500 dark:text-gray-400 text-sm font-medium">No cities found</p>
+            <p className="text-gray-400 dark:text-gray-500 text-xs mt-1">Try a different search term</p>
           </div>
         )}
 

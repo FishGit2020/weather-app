@@ -33,7 +33,8 @@ export function useWeatherData(
   const {
     data: queryData,
     loading: queryLoading,
-    error: queryError
+    error: queryError,
+    refetch: queryRefetch
   } = useQuery<WeatherResponse>(GET_WEATHER, {
     variables: { lat, lon },
     skip: lat === null || lon === null,
@@ -67,6 +68,7 @@ export function useWeatherData(
     loading: queryLoading,
     error: queryError?.message || subscriptionError?.message || null,
     isLive: !!subscriptionData?.weatherUpdates,
-    lastUpdate: subscriptionData?.weatherUpdates?.timestamp || null
+    lastUpdate: subscriptionData?.weatherUpdates?.timestamp || null,
+    refetch: queryRefetch
   };
 }

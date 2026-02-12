@@ -1,6 +1,16 @@
-import { onRequest } from 'firebase-functions/v2/https';
+import { onRequest, onCall, HttpsError } from 'firebase-functions/v2/https';
+import { onSchedule } from 'firebase-functions/v2/scheduler';
+import { initializeApp, getApps } from 'firebase-admin/app';
+import { getFirestore, FieldValue } from 'firebase-admin/firestore';
+import { getMessaging } from 'firebase-admin/messaging';
 import type { Request, Response } from 'express';
+import axios from 'axios';
 import { verifyRecaptchaToken } from './recaptcha.js';
+
+// Initialize Firebase Admin (idempotent)
+if (getApps().length === 0) {
+  initializeApp();
+}
 
 // Cache the Apollo Server instance to avoid re-initialization on every request
 let serverPromise: Promise<any> | null = null;
@@ -89,6 +99,185 @@ export const graphql = onRequest(
       res.status(500).json({
         errors: [{ message: error.message || 'Internal server error' }]
       });
+    }
+  }
+);
+
+// ─── Weather Alert Subscriptions ────────────────────────────────────
+
+/**
+ * Firestore schema:
+ *   alertSubscriptions/{docId}
+ *     - token: string (FCM token)
+ *     - cities: Array<{ lat: number, lon: number, name: string }>
+ *     - createdAt: Timestamp
+ *     - updatedAt: Timestamp
+ */
+
+/**
+ * Callable function: subscribe an FCM token to weather alerts for given cities.
+ */
+export const subscribeToAlerts = onCall(
+  { maxInstances: 5 },
+  async (request) => {
+    const { token, cities } = request.data as {
+      token: string;
+      cities: Array<{ lat: number; lon: number; name: string }>;
+    };
+
+    if (!token || typeof token !== 'string') {
+      throw new HttpsError('invalid-argument', 'FCM token is required');
+    }
+    if (!cities || !Array.isArray(cities) || cities.length === 0) {
+      throw new HttpsError('invalid-argument', 'At least one city is required');
+    }
+
+    const db = getFirestore();
+    const subsRef = db.collection('alertSubscriptions');
+
+    // Upsert: find existing doc by token or create new
+    const existing = await subsRef.where('token', '==', token).limit(1).get();
+
+    if (!existing.empty) {
+      await existing.docs[0].ref.update({
+        cities,
+        updatedAt: FieldValue.serverTimestamp(),
+      });
+    } else {
+      await subsRef.add({
+        token,
+        cities,
+        createdAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
+      });
+    }
+
+    return { success: true };
+  }
+);
+
+// Severe weather condition IDs from OpenWeather API
+// See: https://openweathermap.org/weather-conditions
+const SEVERE_WEATHER_IDS = new Set([
+  200, 201, 202, 210, 211, 212, 221, 230, 231, 232, // Thunderstorm
+  502, 503, 504, 511,                                  // Heavy rain / freezing rain
+  602, 611, 612, 613, 615, 616, 620, 621, 622,        // Heavy snow / sleet
+  711, 731, 751, 761, 762,                             // Smoke, dust, volcanic ash
+  771, 781,                                            // Squall, tornado
+]);
+
+/**
+ * Scheduled function: runs every 30 minutes to check weather for subscribed cities.
+ * Sends FCM push notification for severe weather alerts.
+ */
+export const checkWeatherAlerts = onSchedule(
+  {
+    schedule: 'every 30 minutes',
+    memory: '256MiB',
+    timeoutSeconds: 120,
+    secrets: ['OPENWEATHER_API_KEY'],
+  },
+  async () => {
+    const db = getFirestore();
+    const messaging = getMessaging();
+    const apiKey = process.env.OPENWEATHER_API_KEY || '';
+
+    if (!apiKey) {
+      console.warn('OPENWEATHER_API_KEY not set — skipping weather alerts');
+      return;
+    }
+
+    // Fetch all subscriptions
+    const snapshot = await db.collection('alertSubscriptions').get();
+    if (snapshot.empty) {
+      console.log('No alert subscriptions found');
+      return;
+    }
+
+    // Deduplicate cities across all subscriptions
+    const cityMap = new Map<string, { lat: number; lon: number; name: string; tokens: string[] }>();
+
+    for (const doc of snapshot.docs) {
+      const data = doc.data();
+      const token = data.token as string;
+      const cities = data.cities as Array<{ lat: number; lon: number; name: string }>;
+
+      for (const city of cities) {
+        const key = `${city.lat.toFixed(2)},${city.lon.toFixed(2)}`;
+        const existing = cityMap.get(key);
+        if (existing) {
+          existing.tokens.push(token);
+        } else {
+          cityMap.set(key, { ...city, tokens: [token] });
+        }
+      }
+    }
+
+    console.log(`Checking weather for ${cityMap.size} unique cities`);
+
+    // Check weather for each city
+    const staleTokens: string[] = [];
+
+    for (const [, city] of cityMap) {
+      try {
+        const response = await axios.get(
+          'https://api.openweathermap.org/data/2.5/weather',
+          { params: { lat: city.lat, lon: city.lon, appid: apiKey, units: 'metric' }, timeout: 5000 }
+        );
+
+        const weather = response.data.weather as Array<{ id: number; main: string; description: string }>;
+        const hasSevere = weather.some(w => SEVERE_WEATHER_IDS.has(w.id));
+
+        if (hasSevere) {
+          const severity = weather.find(w => SEVERE_WEATHER_IDS.has(w.id))!;
+          const temp = Math.round(response.data.main.temp);
+
+          console.log(`Severe weather in ${city.name}: ${severity.description}`);
+
+          // Send FCM to all subscribed tokens for this city
+          for (const token of city.tokens) {
+            try {
+              await messaging.send({
+                token,
+                notification: {
+                  title: `⚠️ Weather Alert: ${city.name}`,
+                  body: `${severity.main} — ${severity.description} (${temp}°C)`,
+                },
+                data: {
+                  lat: String(city.lat),
+                  lon: String(city.lon),
+                  cityName: city.name,
+                },
+                webpush: {
+                  fcmOptions: {
+                    link: `/weather/${city.lat},${city.lon}?name=${encodeURIComponent(city.name)}`,
+                  },
+                },
+              });
+            } catch (err: any) {
+              // Token is invalid/expired — mark for cleanup
+              if (err.code === 'messaging/registration-token-not-registered' ||
+                  err.code === 'messaging/invalid-registration-token') {
+                staleTokens.push(token);
+              }
+              console.error(`Failed to send to token ${token.slice(0, 10)}...:`, err.message);
+            }
+          }
+        }
+      } catch (err: any) {
+        console.error(`Failed to fetch weather for ${city.name}:`, err.message);
+      }
+    }
+
+    // Clean up stale tokens
+    if (staleTokens.length > 0) {
+      console.log(`Cleaning up ${staleTokens.length} stale tokens`);
+      const batch = db.batch();
+      for (const token of staleTokens) {
+        const docs = await db.collection('alertSubscriptions').where('token', '==', token).get();
+        docs.forEach(doc => batch.delete(doc.ref));
+      }
+      await batch.commit();
     }
   }
 );

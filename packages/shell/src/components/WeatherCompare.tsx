@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery } from '@apollo/client/react';
-import { GET_CURRENT_WEATHER, getWeatherIconUrl, getWindDirection } from '@weather/shared';
+import { GET_CURRENT_WEATHER, GET_FORECAST, getWeatherIconUrl, getWindDirection } from '@weather/shared';
 import { useAuth } from '../context/AuthContext';
 import { FavoriteCity, RecentCity } from '../lib/firebase';
 
@@ -92,6 +92,121 @@ function CityWeatherCard({ city, label }: { city: SelectableCity | null; label: 
   );
 }
 
+interface ForecastData {
+  forecast: Array<{
+    dt: number;
+    temp: { min: number; max: number; day: number; night: number };
+    weather: Array<{ icon: string; main: string; description: string }>;
+    humidity: number;
+    wind_speed: number;
+    pop: number;
+  }>;
+}
+
+function ComparisonChart({ cityA, cityB }: { cityA: SelectableCity | null; cityB: SelectableCity | null }) {
+  const { data: forecastA } = useQuery<ForecastData>(GET_FORECAST, {
+    variables: { lat: cityA?.lat, lon: cityA?.lon },
+    skip: !cityA,
+    fetchPolicy: 'cache-first',
+  });
+  const { data: forecastB } = useQuery<ForecastData>(GET_FORECAST, {
+    variables: { lat: cityB?.lat, lon: cityB?.lon },
+    skip: !cityB,
+    fetchPolicy: 'cache-first',
+  });
+
+  const daysA = forecastA?.forecast?.slice(0, 5) ?? [];
+  const daysB = forecastB?.forecast?.slice(0, 5) ?? [];
+
+  if (daysA.length === 0 && daysB.length === 0) return null;
+
+  const allTemps = [
+    ...daysA.flatMap(d => [d.temp.min, d.temp.max]),
+    ...daysB.flatMap(d => [d.temp.min, d.temp.max]),
+  ];
+  const minTemp = Math.floor(Math.min(...allTemps) - 2);
+  const maxTemp = Math.ceil(Math.max(...allTemps) + 2);
+  const tempRange = maxTemp - minTemp || 1;
+
+  const chartWidth = 500;
+  const chartHeight = 200;
+  const pad = { top: 25, bottom: 35, left: 40, right: 20 };
+  const plotW = chartWidth - pad.left - pad.right;
+  const plotH = chartHeight - pad.top - pad.bottom;
+
+  const maxDays = Math.max(daysA.length, daysB.length);
+  const getX = (i: number) => pad.left + (i / (maxDays - 1)) * plotW;
+  const getY = (temp: number) => pad.top + (1 - (temp - minTemp) / tempRange) * plotH;
+
+  const buildPath = (days: typeof daysA, accessor: (d: typeof daysA[0]) => number) =>
+    days.map((d, i) => `${i === 0 ? 'M' : 'L'}${getX(i).toFixed(1)},${getY(accessor(d)).toFixed(1)}`).join(' ');
+
+  const formatDay = (dt: number) => new Date(dt * 1000).toLocaleDateString('en-US', { weekday: 'short' });
+
+  return (
+    <div className="mt-6 bg-white dark:bg-gray-800 rounded-xl p-4 shadow-lg">
+      <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-3">5-Day Temperature Comparison</h3>
+      <div className="flex items-center gap-4 mb-3 text-xs text-gray-500 dark:text-gray-400">
+        {cityA && (
+          <span className="flex items-center gap-1">
+            <span className="w-3 h-0.5 bg-blue-500 inline-block rounded" /> {cityA.name}
+          </span>
+        )}
+        {cityB && (
+          <span className="flex items-center gap-1">
+            <span className="w-3 h-0.5 bg-orange-500 inline-block rounded" /> {cityB.name}
+          </span>
+        )}
+      </div>
+      <svg viewBox={`0 0 ${chartWidth} ${chartHeight}`} className="w-full" preserveAspectRatio="xMidYMid meet">
+        {/* Grid lines */}
+        {Array.from({ length: 5 }).map((_, i) => {
+          const temp = minTemp + (tempRange * i) / 4;
+          const y = getY(temp);
+          return (
+            <g key={`grid-${i}`}>
+              <line x1={pad.left} y1={y} x2={chartWidth - pad.right} y2={y} className="stroke-gray-200 dark:stroke-gray-700" strokeWidth={0.5} />
+              <text x={pad.left - 5} y={y + 3} textAnchor="end" className="fill-gray-400 dark:fill-gray-500" fontSize={9}>
+                {Math.round(temp)}°
+              </text>
+            </g>
+          );
+        })}
+
+        {/* X-axis labels */}
+        {(daysA.length >= daysB.length ? daysA : daysB).map((d, i) => (
+          <text key={`label-${i}`} x={getX(i)} y={chartHeight - 8} textAnchor="middle" className="fill-gray-400 dark:fill-gray-500" fontSize={10}>
+            {formatDay(d.dt)}
+          </text>
+        ))}
+
+        {/* City A high/low lines */}
+        {daysA.length > 1 && (
+          <>
+            <path d={buildPath(daysA, d => d.temp.max)} fill="none" className="stroke-blue-500" strokeWidth={2} strokeLinejoin="round" />
+            <path d={buildPath(daysA, d => d.temp.min)} fill="none" className="stroke-blue-300" strokeWidth={1.5} strokeDasharray="4 2" strokeLinejoin="round" />
+            {daysA.map((d, i) => (
+              <circle key={`a-${i}`} cx={getX(i)} cy={getY(d.temp.max)} r={3} className="fill-blue-500" />
+            ))}
+          </>
+        )}
+
+        {/* City B high/low lines */}
+        {daysB.length > 1 && (
+          <>
+            <path d={buildPath(daysB, d => d.temp.max)} fill="none" className="stroke-orange-500" strokeWidth={2} strokeLinejoin="round" />
+            <path d={buildPath(daysB, d => d.temp.min)} fill="none" className="stroke-orange-300" strokeWidth={1.5} strokeDasharray="4 2" strokeLinejoin="round" />
+            {daysB.map((d, i) => (
+              <circle key={`b-${i}`} cx={getX(i)} cy={getY(d.temp.max)} r={3} className="fill-orange-500" />
+            ))}
+          </>
+        )}
+      </svg>
+      <p className="text-xs text-gray-400 dark:text-gray-500 mt-2 text-center">Solid: High · Dashed: Low</p>
+    </div>
+  );
+}
+
 export default function WeatherCompare() {
   const { favoriteCities, recentCities } = useAuth();
   const [cityA, setCityA] = useState<SelectableCity | null>(null);
@@ -145,6 +260,8 @@ export default function WeatherCompare() {
               <CityWeatherCard city={cityB} label="City B" />
             </div>
           </div>
+
+          {(cityA || cityB) && <ComparisonChart cityA={cityA} cityB={cityB} />}
         </>
       )}
     </div>

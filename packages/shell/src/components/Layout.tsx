@@ -5,6 +5,7 @@ import UnitToggle from './UnitToggle';
 import UserMenu from './UserMenu';
 import NotificationBell from './NotificationBell';
 import OfflineIndicator from './OfflineIndicator';
+import LanguageSelector from './LanguageSelector';
 
 export default function Layout() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -36,6 +37,12 @@ export default function Layout() {
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900 transition-colors">
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[60] focus:px-4 focus:py-2 focus:bg-blue-600 focus:text-white focus:rounded-lg focus:outline-none"
+      >
+        Skip to content
+      </a>
       <OfflineIndicator />
       <header className="bg-white dark:bg-gray-800 shadow-md sticky top-0 z-50 transition-colors">
         <div className="container mx-auto px-4 py-3 sm:py-4">
@@ -50,7 +57,7 @@ export default function Layout() {
             </Link>
 
             {/* Desktop nav (hidden on mobile) */}
-            <nav className="hidden md:flex items-center space-x-4">
+            <nav aria-label="Main navigation" className="hidden md:flex items-center space-x-4">
               <Link
                 to="/"
                 className="text-sm text-gray-600 dark:text-gray-300 hover:text-blue-500 dark:hover:text-blue-400 transition"
@@ -63,6 +70,7 @@ export default function Layout() {
               >
                 Compare
               </Link>
+              <LanguageSelector />
               <UnitToggle />
               <ThemeToggle />
               <NotificationBell />
@@ -71,13 +79,14 @@ export default function Layout() {
 
             {/* Mobile controls: small buttons + hamburger */}
             <div className="flex md:hidden items-center space-x-2">
+              <LanguageSelector />
               <UnitToggle />
               <ThemeToggle />
               <NotificationBell />
               <button
                 ref={toggleRef}
                 onClick={() => setMenuOpen(!menuOpen)}
-                className="p-2 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                className="p-2 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors"
                 aria-label="Toggle menu"
               >
                 {menuOpen ? (
@@ -116,11 +125,11 @@ export default function Layout() {
         </div>
       </header>
 
-      <main className="flex-grow container mx-auto px-4 py-8">
+      <main id="main-content" className="flex-grow container mx-auto px-4 py-8">
         <Outlet />
       </main>
 
-      <footer className="bg-gray-800 dark:bg-gray-950 text-white py-6 mt-12 transition-colors">
+      <footer role="contentinfo" className="bg-gray-800 dark:bg-gray-950 text-white py-6 mt-12 transition-colors">
         <div className="container mx-auto px-4 text-center">
           <p className="text-sm">
             Weather data provided by{' '}

@@ -67,6 +67,17 @@ const mocks = [
       },
     },
   },
+  {
+    request: {
+      query: SEARCH_CITIES,
+      variables: { query: 'xyznonexistent', limit: 5 },
+    },
+    result: {
+      data: {
+        searchCities: [],
+      },
+    },
+  },
 ];
 
 const renderWithProviders = (ui: React.ReactElement, apolloMocks = mocks) => {
@@ -197,6 +208,20 @@ describe('CitySearch', () => {
     fireEvent.click(cityButton);
 
     expect(input.value).toBe('');
+  });
+
+  it('shows "No cities found" when search returns empty results', async () => {
+    renderWithProviders(<CitySearch />);
+
+    const input = screen.getByPlaceholderText('Search for a city...');
+    fireEvent.change(input, { target: { value: 'xyznonexistent' } });
+
+    await vi.advanceTimersByTimeAsync(300);
+
+    await waitFor(() => {
+      expect(screen.getByText('No cities found')).toBeInTheDocument();
+      expect(screen.getByText('Try a different search term')).toBeInTheDocument();
+    });
   });
 
   it('debounces search requests', async () => {

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, useSearchParams } from 'react-router';
+import { useParams, useSearchParams, Link } from 'react-router';
 import { useWeatherData, useRemoteConfig, subscribeToMFEvent, MFEvents, CitySelectedEvent } from '@weather/shared';
 import CurrentWeather from './CurrentWeather';
 import CurrentWeatherV1 from './CurrentWeatherV1';
@@ -10,6 +10,7 @@ import HourlyChart from './HourlyChart';
 import WhatToWear from './WhatToWear';
 import SunriseSunset from './SunriseSunset';
 import WeatherMap from './WeatherMap';
+import DashboardSettings, { loadWidgetVisibility, WidgetVisibility } from './DashboardSettings';
 import './WeatherDisplay.css';
 
 export default function WeatherDisplay() {
@@ -40,14 +41,28 @@ export default function WeatherDisplay() {
     return unsubscribe;
   }, []);
 
+  const [widgets, setWidgets] = useState<WidgetVisibility>(loadWidgetVisibility);
+
   const remoteConfig = useRemoteConfig();
   const useV1Layout = remoteConfig.new_exp === 'variant_a';
 
-  const { current, forecast, hourly, loading, error, isLive, lastUpdate } = useWeatherData(
+  const [refreshing, setRefreshing] = useState(false);
+
+  const { current, forecast, hourly, loading, error, isLive, lastUpdate, refetch } = useWeatherData(
     location?.lat ?? null,
     location?.lon ?? null,
     true // Enable real-time updates
   );
+
+  const handleRefresh = async () => {
+    if (refreshing || !refetch) return;
+    setRefreshing(true);
+    try {
+      await refetch();
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   if (!location) {
     return (
@@ -59,7 +74,7 @@ export default function WeatherDisplay() {
 
   if (loading && !current) {
     return (
-      <div className="weather-display-container space-y-6 animate-pulse">
+      <div className="weather-display-container space-y-6 animate-pulse" aria-busy="true" aria-label="Loading weather data">
         {/* City name + badge skeleton */}
         <div className="flex items-center justify-between">
           <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-48" />
@@ -119,22 +134,47 @@ export default function WeatherDisplay() {
 
   if (error) {
     return (
-      <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6 text-center">
+      <div role="alert" className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6 text-center">
         <p className="text-red-600 dark:text-red-400">{error}</p>
       </div>
     );
   }
 
   return (
-    <div className="weather-display-container space-y-6">
+    <div className="weather-display-container space-y-6 animate-fadeIn" aria-live="polite">
+      <Link
+        to="/"
+        className="inline-flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors"
+      >
+        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+        </svg>
+        Back to Search
+      </Link>
+
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-gray-800 dark:text-white">{cityName}</h2>
-        {isLive && (
-          <span className="inline-flex items-center px-2 py-1 bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 text-sm rounded">
-            <span className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></span>
-            Live
-          </span>
-        )}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleRefresh}
+            disabled={refreshing}
+            className="inline-flex items-center gap-1 px-2 py-1 text-sm text-gray-500 dark:text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-gray-700 rounded transition-colors disabled:opacity-50"
+            aria-label="Refresh weather data"
+            title="Refresh weather data"
+          >
+            <svg className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            {refreshing ? 'Refreshing...' : 'Refresh'}
+          </button>
+          <DashboardSettings visibility={widgets} onChange={setWidgets} />
+          {isLive && (
+            <span className="inline-flex items-center px-2 py-1 bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 text-sm rounded">
+              <span className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></span>
+              Live
+            </span>
+          )}
+        </div>
       </div>
 
       {lastUpdate && (
@@ -143,32 +183,38 @@ export default function WeatherDisplay() {
         </p>
       )}
 
-      {current && forecast && <WeatherAlerts current={current} forecast={forecast} />}
+      {widgets.weatherAlerts && current && forecast && <WeatherAlerts current={current} forecast={forecast} />}
 
-      {current && (useV1Layout ? <CurrentWeatherV1 data={current} /> : <CurrentWeather data={current} />)}
+      {widgets.currentWeather && current && (useV1Layout ? <CurrentWeatherV1 data={current} /> : <CurrentWeather data={current} />)}
 
-      {current && <SunriseSunset data={current} />}
+      {widgets.sunriseSunset && current && <SunriseSunset data={current} />}
 
-      {current && <WhatToWear data={current} />}
+      {widgets.whatToWear && current && <WhatToWear data={current} />}
 
-      {hourly && hourly.length > 0 && (
+      {hourly && hourly.length > 0 && (widgets.hourlyForecast || widgets.hourlyChart) && (
         <section>
-          <h3 className="text-xl font-semibold text-gray-800 dark:text-white mb-4">Hourly Forecast</h3>
-          <HourlyForecast data={hourly} />
-          <div className="mt-4">
-            <HourlyChart data={hourly} />
-          </div>
+          {widgets.hourlyForecast && (
+            <>
+              <h3 className="text-xl font-semibold text-gray-800 dark:text-white mb-4">Hourly Forecast</h3>
+              <HourlyForecast data={hourly} />
+            </>
+          )}
+          {widgets.hourlyChart && (
+            <div className={widgets.hourlyForecast ? 'mt-4' : ''}>
+              <HourlyChart data={hourly} />
+            </div>
+          )}
         </section>
       )}
 
-      {forecast && forecast.length > 0 && (
+      {widgets.forecast && forecast && forecast.length > 0 && (
         <section>
           <h3 className="text-xl font-semibold text-gray-800 dark:text-white mb-4">7-Day Forecast</h3>
           <Forecast data={forecast} />
         </section>
       )}
 
-      {location && <WeatherMap lat={location.lat} lon={location.lon} />}
+      {widgets.weatherMap && location && <WeatherMap lat={location.lat} lon={location.lon} />}
 
       <div className="mt-4 text-center text-sm text-gray-500 dark:text-gray-400">
         <span className="inline-flex items-center px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded">
