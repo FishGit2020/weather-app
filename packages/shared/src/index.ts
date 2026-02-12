@@ -4,3 +4,4 @@ export * from './apollo';
 export * from './utils';
 export * from './hooks';
 export * from './i18n';
+export * from './data';

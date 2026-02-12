@@ -29,6 +29,7 @@ const en = {
   'search.couldNotDetermineLocation': 'Could not determine location',
   'search.failedToLookUp': 'Failed to look up location',
   'search.removeFromRecent': 'Remove from recent searches',
+  'search.suggestedCities': 'Did you mean?',
 
   // Weather Display
   'weather.backToSearch': 'Back to Search',
@@ -244,6 +245,7 @@ const es: Record<TranslationKey, string> = {
   'search.couldNotDetermineLocation': 'No se pudo determinar la ubicación',
   'search.failedToLookUp': 'Error al buscar ubicación',
   'search.removeFromRecent': 'Quitar de búsquedas recientes',
+  'search.suggestedCities': '¿Quisiste decir?',
 
   // Weather Display
   'weather.backToSearch': 'Volver a Buscar',

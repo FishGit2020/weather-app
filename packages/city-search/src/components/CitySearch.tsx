@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router';
 import { useLazyQuery } from '@apollo/client/react';
-import { SEARCH_CITIES, REVERSE_GEOCODE, City, eventBus, MFEvents, useTranslation } from '@weather/shared';
+import { SEARCH_CITIES, REVERSE_GEOCODE, City, eventBus, MFEvents, useTranslation, fuzzySearchCities, MAJOR_CITIES } from '@weather/shared';
 import WeatherPreview from './WeatherPreview';
 import './CitySearch.css';
 
@@ -165,9 +165,21 @@ export default function CitySearch({ onCitySelect, recentCities = [], onRemoveCi
     );
   }, [reverseGeocode]);
 
+  // Fuzzy search fallback: when API returns 0 results, try matching against static city list
+  const fuzzySuggestions = useMemo(() => {
+    if (query.length >= 2 && !loading && results.length === 0 && data?.searchCities !== undefined) {
+      return fuzzySearchCities(MAJOR_CITIES, query, 5).map(city => ({
+        ...city,
+        id: `${city.lat.toFixed(2)},${city.lon.toFixed(2)}`
+      }));
+    }
+    return [];
+  }, [query, loading, results, data]);
+
   // Derive dropdown visibility from current state
   const showSearchResults = results.length > 0 && !loading;
-  const showNoResults = query.length >= 2 && !loading && results.length === 0 && data?.searchCities !== undefined;
+  const showFuzzySuggestions = fuzzySuggestions.length > 0 && !loading;
+  const showNoResults = query.length >= 2 && !loading && results.length === 0 && data?.searchCities !== undefined && fuzzySuggestions.length === 0;
   const showDropdown = inputFocused && query.length < 2 && !loading && results.length === 0;
   const isShowingRecent = recentCities.length > 0;
   const dropdownCities = isShowingRecent ? recentCities.slice(0, 5) : POPULAR_CITIES;
@@ -176,9 +188,11 @@ export default function CitySearch({ onCitySelect, recentCities = [], onRemoveCi
   // Get the currently visible list for keyboard navigation
   const visibleItems: (City | RecentCity)[] = showSearchResults
     ? results
-    : showDropdown
-      ? dropdownCities
-      : [];
+    : showFuzzySuggestions
+      ? fuzzySuggestions
+      : showDropdown
+        ? dropdownCities
+        : [];
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Escape') {
@@ -291,6 +305,38 @@ export default function CitySearch({ onCitySelect, recentCities = [], onRemoveCi
         {showSearchResults && (
           <div ref={dropdownRef} className="city-search-dropdown absolute top-full mt-2 w-full bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden z-10" role="listbox">
             {results.map((city, index) => (
+              <button
+                key={city.id}
+                id={`city-option-${index}`}
+                data-dropdown-item
+                onClick={() => handleCityClick(city)}
+                onMouseEnter={() => setHighlightedIndex(index)}
+                className={`w-full text-left px-4 py-3 transition border-b dark:border-gray-700 last:border-b-0 flex items-center ${
+                  index === highlightedIndex
+                    ? 'bg-blue-50 dark:bg-gray-700'
+                    : 'hover:bg-blue-50 dark:hover:bg-gray-700'
+                }`}
+                role="option"
+                aria-selected={index === highlightedIndex}
+              >
+                <div className="min-w-0 flex-1">
+                  <p className="font-medium dark:text-white">{city.name}</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    {city.state && `${city.state}, `}{city.country}
+                  </p>
+                </div>
+                <WeatherPreview lat={city.lat} lon={city.lon} />
+              </button>
+            ))}
+          </div>
+        )}
+
+        {showFuzzySuggestions && (
+          <div ref={dropdownRef} className="city-search-dropdown absolute top-full mt-2 w-full bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden z-10" role="listbox">
+            <div className="px-4 py-2 bg-amber-50 dark:bg-amber-900/30 border-b dark:border-gray-700">
+              <p className="text-xs font-medium text-amber-600 dark:text-amber-400 uppercase tracking-wide">{t('search.suggestedCities')}</p>
+            </div>
+            {fuzzySuggestions.map((city, index) => (
               <button
                 key={city.id}
                 id={`city-option-${index}`}
