@@ -69,6 +69,15 @@ export default defineConfig({
         ]
       },
       workbox: {
+        clientsClaim: true,
+        skipWaiting: true,
+        navigateFallback: '/index.html',
+        navigateFallbackDenylist: [
+          /^\/graphql/,
+          /^\/stock\//,
+          /^\/podcast\//,
+          /^\/api\//,
+        ],
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
         runtimeCaching: [
           {
