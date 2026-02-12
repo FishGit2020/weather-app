@@ -4,11 +4,11 @@ import { initializeApp, getApps } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { getMessaging } from 'firebase-admin/messaging';
+import { getAppCheck } from 'firebase-admin/app-check';
 import type { Request, Response } from 'express';
 import axios from 'axios';
 import NodeCache from 'node-cache';
 import crypto from 'crypto';
-import { verifyRecaptchaToken } from './recaptcha.js';
 import type { FunctionDeclaration } from '@google/genai';
 
 // Initialize Firebase Admin (idempotent)
@@ -72,21 +72,21 @@ export const graphql = onRequest(
     maxInstances: 10,
     memory: '512MiB',
     timeoutSeconds: 60,
-    secrets: ['OPENWEATHER_API_KEY', 'RECAPTCHA_SECRET_KEY', 'FINNHUB_API_KEY', 'PODCASTINDEX_API_KEY', 'PODCASTINDEX_API_SECRET']
+    secrets: ['OPENWEATHER_API_KEY', 'FINNHUB_API_KEY', 'PODCASTINDEX_API_KEY', 'PODCASTINDEX_API_SECRET']
   },
   async (req: Request, res: Response) => {
     const server = await getServer();
 
-    // reCAPTCHA v3 verification
-    const recaptchaSecretKey = process.env.RECAPTCHA_SECRET_KEY;
-    if (recaptchaSecretKey) {
-      const token = req.headers['x-recaptcha-token'] as string;
-      const result = await verifyRecaptchaToken(token, recaptchaSecretKey);
-      if (!result.valid) {
-        console.warn('reCAPTCHA verification failed:', result.reason);
+    // App Check: verify request comes from our app (bot protection)
+    const appCheckToken = req.headers['x-firebase-appcheck'] as string;
+    if (appCheckToken) {
+      try {
+        await getAppCheck().verifyToken(appCheckToken);
+      } catch (err) {
+        console.warn('App Check verification failed:', err);
         res.status(403).json({
           errors: [{
-            message: result.reason || 'reCAPTCHA verification failed',
+            message: 'App Check verification failed',
             extensions: { code: 'UNAUTHENTICATED' }
           }]
         });
