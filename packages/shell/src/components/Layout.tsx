@@ -8,9 +8,11 @@ import UserMenu from './UserMenu';
 import NotificationBell from './NotificationBell';
 import OfflineIndicator from './OfflineIndicator';
 import LanguageSelector from './LanguageSelector';
+import { useRemoteConfigContext } from '../context/RemoteConfigContext';
 
 export default function Layout() {
   const { t } = useTranslation();
+  const { config, loading: configLoading } = useRemoteConfigContext();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const toggleRef = useRef<HTMLButtonElement>(null);
@@ -193,6 +195,18 @@ export default function Layout() {
           <p className="text-xs text-gray-400 mt-2">
             {t('footer.builtWith')}
           </p>
+          {!configLoading && Object.keys(config).length > 0 && (
+            <div className="mt-2 flex flex-wrap justify-center gap-1">
+              {Object.entries(config).map(([key, value]) => (
+                <span
+                  key={key}
+                  className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-gray-700 text-gray-300"
+                >
+                  {key}: <span className="ml-1 font-mono text-blue-400">{value}</span>
+                </span>
+              ))}
+            </div>
+          )}
         </div>
       </footer>
     </div>
