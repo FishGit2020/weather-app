@@ -100,13 +100,19 @@ interface UseStockQuoteReturn {
   loading: boolean;
   error: string | null;
   refetch: () => void;
+  lastUpdated: Date | null;
+  isLive: boolean;
 }
 
-export function useStockQuote(symbol: string | null): UseStockQuoteReturn {
+export function useStockQuote(
+  symbol: string | null,
+  pollInterval: number = 60_000
+): UseStockQuoteReturn {
   const { data, loading, error, refetch } = useQuery<StockQuoteResponse>(GET_STOCK_QUOTE, {
     variables: { symbol: symbol! },
     skip: !symbol,
     fetchPolicy: 'cache-and-network',
+    pollInterval: symbol ? pollInterval : 0,
   });
 
   return {
@@ -114,6 +120,8 @@ export function useStockQuote(symbol: string | null): UseStockQuoteReturn {
     loading,
     error: error?.message ?? null,
     refetch: () => { refetch(); },
+    lastUpdated: data?.stockQuote?.t ? new Date(data.stockQuote.t * 1000) : null,
+    isLive: !!symbol && pollInterval > 0,
   };
 }
 

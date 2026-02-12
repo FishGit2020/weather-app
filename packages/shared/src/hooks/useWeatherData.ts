@@ -28,17 +28,21 @@ interface WeatherUpdateResponse {
 export function useWeatherData(
   lat: number | null,
   lon: number | null,
-  enableRealtime: boolean = false
+  enableRealtime: boolean = false,
+  pollInterval: number = 60_000
 ) {
+  const hasCoords = lat !== null && lon !== null;
+  const effectivePollInterval = enableRealtime && hasCoords ? pollInterval : 0;
+
   const {
     data: queryData,
     loading: queryLoading,
     error: queryError,
-    refetch: queryRefetch
   } = useQuery<WeatherResponse>(GET_WEATHER, {
     variables: { lat, lon },
-    skip: lat === null || lon === null,
-    fetchPolicy: 'cache-and-network'
+    skip: !hasCoords,
+    fetchPolicy: 'cache-and-network',
+    pollInterval: effectivePollInterval,
   });
 
   // Disable subscriptions in production (Firebase Cloud Functions don't support WebSockets)
@@ -61,14 +65,17 @@ export function useWeatherData(
   const forecast = queryData?.weather?.forecast || null;
   const hourly = queryData?.weather?.hourly || null;
 
+  const isLive = enableRealtime && (effectivePollInterval > 0 || !!subscriptionData?.weatherUpdates);
+  const lastUpdate = subscriptionData?.weatherUpdates?.timestamp
+    || (queryData?.weather?.current?.dt ? new Date(queryData.weather.current.dt * 1000).toISOString() : null);
+
   return {
     current,
     forecast,
     hourly,
     loading: queryLoading,
     error: queryError?.message || subscriptionError?.message || null,
-    isLive: !!subscriptionData?.weatherUpdates,
-    lastUpdate: subscriptionData?.weatherUpdates?.timestamp || null,
-    refetch: queryRefetch
+    isLive,
+    lastUpdate,
   };
 }
