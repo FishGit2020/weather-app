@@ -67,6 +67,7 @@ const en = {
   'weather.visibility': 'Visibility',
   'weather.whatToWear': 'What to Wear',
   'weather.refreshData': 'Refresh weather data',
+  'weather.paused': 'Paused',
 
   // Dashboard settings
   'dashboard.settings': 'Dashboard settings',
@@ -255,6 +256,10 @@ const en = {
   'stocks.loading': 'Loading stock data...',
   'stocks.error': 'Failed to load stock data',
   'stocks.sparkline7d': '7-day trend',
+  'stocks.live': 'LIVE',
+  'stocks.lastUpdated': 'Last updated',
+  'stocks.refreshInterval': 'Refresh interval',
+  'stocks.paused': 'Paused',
 
   // Podcast Player
   'podcasts.title': 'Podcasts',
@@ -364,6 +369,7 @@ const es: Record<TranslationKey, string> = {
   'weather.visibility': 'Visibilidad',
   'weather.whatToWear': 'Qu\u00e9 ponerse',
   'weather.refreshData': 'Actualizar datos del clima',
+  'weather.paused': 'Pausado',
 
   // Dashboard settings
   'dashboard.settings': 'Configuraci\u00f3n del panel',
@@ -552,6 +558,10 @@ const es: Record<TranslationKey, string> = {
   'stocks.loading': 'Cargando datos de acciones...',
   'stocks.error': 'Error al cargar datos de acciones',
   'stocks.sparkline7d': 'Tendencia 7 d\u00edas',
+  'stocks.live': 'EN VIVO',
+  'stocks.lastUpdated': '\u00daltima actualizaci\u00f3n',
+  'stocks.refreshInterval': 'Intervalo de actualizaci\u00f3n',
+  'stocks.paused': 'Pausado',
 
   // Podcast Player
   'podcasts.title': 'Podcasts',

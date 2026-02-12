@@ -35,7 +35,18 @@ export default function StockTracker() {
   const [selectedSymbol, setSelectedSymbol] = useState<string | null>(null);
   const [selectedName, setSelectedName] = useState<string>('');
 
-  const { quote: selectedQuote, loading: quoteLoading } = useStockQuote(selectedSymbol);
+  const [liveEnabled, setLiveEnabled] = useState(() => {
+    try { return localStorage.getItem('stock-live-enabled') === 'true'; } catch { return false; }
+  });
+
+  useEffect(() => {
+    try { localStorage.setItem('stock-live-enabled', String(liveEnabled)); } catch { /* ignore */ }
+  }, [liveEnabled]);
+
+  const { quote: selectedQuote, loading: quoteLoading, lastUpdated, isLive } = useStockQuote(
+    selectedSymbol,
+    liveEnabled ? 60_000 : 0
+  );
   const { candles: selectedCandles, loading: candlesLoading } = useStockCandles(selectedSymbol);
 
   // Persist watchlist to localStorage
@@ -145,6 +156,25 @@ export default function StockTracker() {
                   {isPositive ? '+' : ''}{selectedQuote.d.toFixed(2)} ({isPositive ? '+' : ''}{selectedQuote.dp.toFixed(2)}%)
                 </span>
               </div>
+              <div className="flex items-center gap-2 text-sm mb-4">
+                <button
+                  onClick={() => setLiveEnabled(prev => !prev)}
+                  className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded transition-colors"
+                  aria-label={isLive ? t('stocks.live') : t('stocks.paused')}
+                >
+                  {isLive ? (
+                    <>
+                      <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                      <span className="text-green-700 dark:text-green-300 font-medium">{t('stocks.live')}</span>
+                    </>
+                  ) : (
+                    <span className="text-gray-500 dark:text-gray-400">{t('stocks.paused')}</span>
+                  )}
+                </button>
+                {isLive && lastUpdated && (
+                  <span className="text-gray-500 dark:text-gray-400">· {lastUpdated.toLocaleTimeString()}</span>
+                )}
+              </div>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
                 <div>
                   <p className="text-gray-500 dark:text-gray-400">{t('stocks.open')}</p>
@@ -186,6 +216,7 @@ export default function StockTracker() {
           watchlist={watchlist}
           onToggleWatchlist={handleToggleWatchlist}
           onSelectStock={handleWatchlistStockSelect}
+          liveEnabled={liveEnabled}
         />
       </div>
     </div>
